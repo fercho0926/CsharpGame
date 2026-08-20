@@ -1,7 +1,21 @@
 "use client";
 import { useMemo, useState } from "react";
 
-type StudyTopic={id:string;title:string;tags:string[];summary:string;code:string;points:string[];trap:string};
+type StudyQuestion={prompt:string;options:string[];answer:number;why:string;code?:string};
+type StudyTopic={id:string;title:string;tags:string[];summary:string;code:string;points:string[];trap:string;questions?:StudyQuestion[]};
+
+const encapsulationQuestions:StudyQuestion[]=[
+ {prompt:"¿Qué acceso permite usar un miembro desde cualquier código que pueda ver el tipo?",options:["public","private","protected","internal"],answer:0,why:"public expone el miembro fuera del tipo. Debe usarse solo cuando forma parte del contrato público."},
+ {prompt:"¿Qué acceso limita un miembro para que solo lo use el tipo que lo declara?",options:["protected","private","public","static"],answer:1,why:"private es el nivel más restrictivo: el miembro solo es accesible dentro del tipo que lo declara."},
+ {prompt:"¿Qué acceso permite usar un miembro desde la clase y sus clases derivadas?",options:["internal","protected","private","public"],answer:1,why:"protected permite acceso dentro del tipo y desde tipos derivados, pero no desde cualquier clase externa."},
+ {prompt:"¿Qué significa internal en un ensamblado de C#?",options:["Visible dentro del mismo assembly, salvo configuraciones especiales","Visible solo dentro de la clase","Visible solo en clases derivadas","Obliga a que el miembro sea static"],answer:0,why:"internal limita el acceso al mismo ensamblado. Es útil para código compartido dentro del proyecto sin convertirlo en API pública."},
+ {prompt:"En este código, ¿qué línea compila desde otra clase del mismo proyecto?",options:["user.PublicName","user.secret","user.ProtectedName","User.staticCounter si es private"],answer:0,why:"Solo el miembro public es accesible desde una clase externa; private y protected tienen restricciones adicionales.",code:"class User\n{\n    public string PublicName;\n    private string secret;\n    protected string ProtectedName;\n}"},
+ {prompt:"¿Qué expresa static en un miembro?",options:["Pertenece al tipo y no a una instancia concreta","Lo hace siempre private","Solo pueden usarlo las clases derivadas","Lo convierte en una constante"],answer:0,why:"static indica que el miembro se accede mediante el tipo y se comparte a nivel de tipo; no define por sí solo public o private."},
+ {prompt:"¿Cuál acceso protege mejor un campo interno que solo debe cambiarse mediante métodos?",options:["private","public","internal","protected"],answer:0,why:"private oculta el campo y permite controlar los cambios mediante métodos o propiedades públicas cuidadosamente diseñadas."},
+ {prompt:"¿Qué combinación es válida para un contador compartido por todas las instancias, pero oculto desde fuera?",options:["private static int count;","public instance int count;","protected readonly static public count;","internal private count;"],answer:0,why:"private limita el acceso externo y static hace que exista un único miembro asociado al tipo, no uno por instancia."},
+ {prompt:"¿Qué diferencia hay entre protected e internal?",options:["protected depende de la herencia; internal depende del ensamblado","protected siempre es público; internal siempre es privado","Ambos significan exactamente lo mismo","internal solo funciona con static"],answer:0,why:"protected autoriza al tipo y a sus derivados; internal autoriza al código del mismo ensamblado, aunque no exista herencia."},
+ {prompt:"¿Cuál diseño aplica mejor encapsulamiento?",options:["Campo private y una propiedad o método público que valide los cambios","Todos los campos public para evitar métodos","Todos los miembros static","Usar protected para cualquier dato"],answer:0,why:"Encapsular es proteger el estado interno y exponer operaciones válidas, no simplemente hacer todo accesible."},
+];
 
 const studyTopics:StudyTopic[]=[
  {id:"class-struct-record",title:"class vs struct vs record",tags:["Tipos","POO","Entrevista"],summary:"Los tres pueden definir tipos, pero expresan semánticas diferentes: identidad y referencia, valor pequeño, o datos con igualdad por valor.",code:"class User { public int Id; }\nstruct Point { public int X, Y; }\nrecord UserDto(int Id);",points:["class es reference type y normalmente representa identidad de objeto.","struct es value type: se copia por valor y suele ser adecuado para valores pequeños.","record puede ser record class o record struct y ofrece igualdad basada en valores.","Una clase admite herencia de otra clase; un struct no hereda de clases, aunque puede implementar interfaces."],trap:"Un record no significa automáticamente que todo sea profundamente inmutable: sus propiedades y objetos internos requieren analizarse."},
@@ -12,7 +26,21 @@ const studyTopics:StudyTopic[]=[
  {id:"boxing",title:"boxing y unboxing",tags:["Tipos","Memoria","Entrevista"],summary:"Boxing envuelve un value type dentro de un object o interfaz. Unboxing extrae el tipo compatible y puede fallar si el tipo no coincide.",code:"int number = 42;\nobject boxed = number;\nint copy = (int)boxed;",points:["Boxing crea un objeto que contiene una copia del value type.","Unboxing requiere el tipo correcto y una conversión explícita.","Las colecciones genéricas suelen evitar boxing innecesario.","El cast a un tipo incompatible produce una excepción."],trap:"Asignar un int a object no mantiene una referencia al int original; se crea una caja con una copia."},
 ];
 
+studyTopics.push({
+ id:"encapsulation",title:"Encapsulamiento y modificadores",tags:["POO","Acceso","Entrevista"],summary:"Encapsular es proteger el estado interno y exponer solo las operaciones válidas. public, private, protected e internal controlan quién puede acceder; static indica pertenencia al tipo, no un nivel de acceso.",code:"class Account\n{\n    private decimal balance;\n    public decimal Balance => balance;\n    protected void SetBalance(decimal value) => balance = value;\n    internal static string Area => \"billing\";\n}",points:["public: accesible desde código externo que pueda ver el tipo.","private: accesible solo dentro del tipo que lo declara.","protected: accesible dentro del tipo y desde clases derivadas.","internal: accesible dentro del mismo ensamblado.","static: pertenece al tipo y se comparte a nivel de tipo; no es public ni private por sí mismo."],trap:"static no es un modificador de acceso. Puede combinarse, por ejemplo, con private: private static int count;",questions:encapsulationQuestions
+});
+
+function StudyQuiz({questions}:{questions:StudyQuestion[]}){
+ const [index,setIndex]=useState(0);const [selected,setSelected]=useState<number|null>(null);const [submitted,setSubmitted]=useState(false);const question=questions[index];const correct=selected===question.answer;
+ const next=()=>{setIndex(i=>(i+1)%questions.length);setSelected(null);setSubmitted(false)};
+ return <section className="study-quiz"><p className="eyebrow">REPASO · {index+1} DE {questions.length}</p><h4>{question.prompt}</h4>{question.code&&<pre><code>{question.code}</code></pre>}<div className="study-quiz-options">{question.options.map((option,i)=><button key={option} className={`${!submitted&&selected===i?"selected":""} ${submitted&&i===question.answer?"correct":""} ${submitted&&selected===i&&i!==question.answer?"wrong":""}`} onClick={()=>!submitted&&setSelected(i)}>{String.fromCharCode(65+i)}. {option}</button>)}</div>{submitted&&<p className={`study-quiz-feedback ${correct?"good":"bad"}`}>{correct?"Correcto. ":"Repasa este punto. "}{question.why}</p>}{!submitted?<button className="primary-cta" disabled={selected===null} onClick={()=>setSubmitted(true)}>Comprobar respuesta</button>:<button className="primary-cta" onClick={next}>Siguiente pregunta</button>}</section>;
+}
+
 export function StudyTopics(){
+ return <><StudyTopicsGlossary/><StudyQuiz questions={encapsulationQuestions}/></>;
+}
+
+function StudyTopicsGlossary(){
  const [query,setQuery]=useState("");
  const [active,setActive]=useState(studyTopics[0].id);
  const filtered=useMemo(()=>{const q=query.trim().toLowerCase();return q?studyTopics.filter(t=>[t.title,t.summary,...t.tags,...t.points].join(" ").toLowerCase().includes(q)):studyTopics},[query]);

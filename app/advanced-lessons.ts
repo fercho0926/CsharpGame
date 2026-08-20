@@ -3,7 +3,7 @@ export type AdvancedStep = { id:string; title:string; summary:string; code:strin
 
 type Definition = { id:string; title:string; summary:string; code:string; correct:string; wrong:string[]; why:string };
 
-const prompts = [
+const legacyPrompts = [
   () => `¿Cuál afirmación describe correctamente este concepto?`,
   () => `En el contexto de este concepto, ¿cuál opción es válida?`,
   () => `¿Qué resultado o comportamiento esperarías en este tema?`,
@@ -16,8 +16,23 @@ const prompts = [
   (d:Definition) => `¿Qué deberías recordar para evitar un bug en ${d.title.toLowerCase()}?`,
 ];
 
+void legacyPrompts;
+
+const specificPrompts = [
+  (d:Definition) => `Lee este ejemplo de ${d.title}: \`${d.code.split("\\n")[0]}\`. ¿Qué comportamiento describe correctamente el código?`,
+  (d:Definition) => `Para el código de ${d.title}, ¿qué opción explica el papel de la parte principal del ejemplo?`,
+  (d:Definition) => `Si ejecutaras el ejemplo de ${d.title}, ¿qué resultado o efecto deberías esperar?`,
+  (d:Definition) => `En ${d.title}, ¿qué error común produciría un código como el mostrado?`,
+  (d:Definition) => `Si tuvieras que aplicar ${d.title} en una clase real, ¿qué decisión sería la adecuada?`,
+  (d:Definition) => `¿Qué palabra, tipo o API del ejemplo de ${d.title} está directamente relacionada con la solución?`,
+  (d:Definition) => `¿Qué alternativa sería incorrecta al implementar ${d.title} como muestra el ejemplo?`,
+  (d:Definition) => `A partir del código de ${d.title}, ¿qué concepto concreto se está aplicando?`,
+  (d:Definition) => `En una entrevista sobre ${d.title}, ¿qué afirmación defenderías con este ejemplo?`,
+  (d:Definition) => `¿Qué regla de ${d.title} deberías recordar para evitar un bug en este código?`,
+];
+
 function makeQuestions(d:Definition):AdvancedQuestion[] {
-  return prompts.map((makePrompt, i) => {
+  return specificPrompts.map((makePrompt, i) => {
     const options = [d.correct, ...d.wrong].map((value, index, all) => all[(index + i) % all.length]);
     return { prompt:makePrompt(d), options, answer:options.indexOf(d.correct), why:d.why, code:i === 2 || i === 7 ? d.code : undefined };
   });
@@ -52,7 +67,7 @@ const definitions:Definition[] = [
 
  {id:"m07-value-ref",title:"value types vs reference types",summary:"Los value types copian su valor al asignarse. Los reference types copian la referencia; dos variables pueden apuntar al mismo objeto.",code:"var a = new List<int>();\nvar b = a;\nb.Add(1);",correct:"Con una clase o lista, a y b pueden referirse al mismo objeto",wrong:["Siempre se copia toda la lista","List es un value type","Las referencias son siempre inmutables"],why:"La diferencia afecta copias, aliasing y mutaciones observables."},
  {id:"m07-pass-value",title:"pasar parámetros por valor",summary:"Por defecto, C# pasa parámetros por valor. En reference types se copia la referencia, por lo que el método aún puede mutar el objeto apuntado.",code:"void Add(List<int> xs) => xs.Add(1);",correct:"Se copia la referencia, no el objeto completo",wrong:["Todo parámetro se pasa por referencia con ref","Nunca se puede mutar el objeto","Se clona la lista automáticamente"],why:"Pasar una referencia por valor permite mutar el objeto, pero reasignar el parámetro no cambia la variable del llamador."},
- {id:"m07-ref-out-in",title:"ref, out e in",summary:"ref requiere inicialización, out debe asignarse dentro del método e in pasa una referencia de solo lectura. Son contratos explícitos.",code:"bool ok = int.TryParse(text, out var number);",correct:"out permite que el método produzca un valor adicional",wrong:["out exige valor inicial","ref ignora la variable del llamador","in permite modificar el argumento"],why:"Cada modificador cambia las reglas de entrada y salida; deben usarse con una razón clara."},
+ {id:"m07-ref-out-in",title:"ref, out e in",summary:"ref requiere una variable inicializada antes de la llamada; out no requiere inicialización previa, pero el método debe asignarle un valor; in pasa una referencia de solo lectura.",code:"int value = 0;\nUpdate(ref value);\nint.TryParse(text, out var number);",correct:"ref recibe una variable inicializada y out puede recibir una variable no inicializada",wrong:["out exige valor inicial","ref ignora la variable del llamador","in permite modificar el argumento"],why:"ref se usa para leer y modificar una variable existente; out se usa para producir un valor y obliga al método a asignarlo antes de terminar."},
  {id:"m07-string-ref",title:"strings como reference types",summary:"string es reference type, pero su inmutabilidad hace que operaciones como concatenar devuelvan una nueva cadena en lugar de alterar la anterior.",code:"var a = \"A\";\nvar b = a;\nb += \"B\";",correct:"b recibe una nueva string y a permanece \"A\"",wrong:["a cambia a \"AB\" siempre","string es value type","b modifica chars internos"],why:"La referencia se copia, pero el objeto string no se modifica; se crea otro valor de texto."},
  {id:"m07-enums",title:"enums",summary:"Un enum define nombres para un conjunto de valores integrales. Puede convertirse a su tipo subyacente, pero conviene validar valores externos.",code:"enum Status { Draft, Published }\nStatus s = Status.Draft;",correct:"Nombrar estados relacionados de forma tipada",wrong:["Guardar cualquier texto sin validación","Crear herencia múltiple","Reemplazar todas las clases"],why:"Los enums mejoran legibilidad, aunque sus valores subyacentes pueden contener números no declarados."},
  {id:"m07-structs",title:"structs",summary:"Un struct es un value type apropiado para datos pequeños cuyo valor representa la entidad. No admite herencia de clases, pero puede implementar interfaces.",code:"readonly struct Point(int x, int y);",correct:"Un tipo de valor que se copia y puede implementar interfaces",wrong:["Una clase con herencia completa","Siempre mejor que class","Un reference type mutable por defecto"],why:"Elegir struct requiere considerar tamaño, copias, mutabilidad y semántica de valor."},
@@ -194,6 +209,53 @@ const preciseM04:Record<string,AdvancedQuestion[]>={
 // siempre la opción A, sin leer la pregunta). Esta rotación determinista
 // redistribuye la posición de la respuesta correcta entre A/B/C/D sin tocar
 // el texto de cada pregunta.
+preciseM04["m07-ref-out-in"] = [
+  sq("¿Qué requisito tiene `ref` antes de llamar al método?", ["La variable debe estar inicializada", "La variable debe ser null", "La variable debe ser const", "No necesita existir"], 0, "Una variable pasada con ref debe tener un valor antes de la llamada."),
+  sq("¿Qué ocurre con `int.TryParse(text, out var number)`?", ["number puede declararse sin valor previo y TryParse debe asignarlo", "number debe inicializarse con 0 antes", "out solo sirve para leer", "number siempre queda null"], 0, "out permite declarar o pasar una variable no inicializada; el método debe asignarle un resultado."),
+  sq("¿Cuál llamada compila correctamente?", ["int value = 0; Update(ref value);", "int value; Update(ref value);", "const int value = 0; Update(ref value);", "Update(ref 0);"], 0, "ref necesita una variable asignable e inicializada, no un literal ni una variable sin valor."),
+  sq("¿Cuál llamada usa correctamente `out`?", ["int result; GetValue(out result);", "int result; GetValue(ref result);", "GetValue(out 0);", "const int result = 0; GetValue(out result);"], 0, "Una variable out no necesita inicialización previa, pero debe poder recibir la asignación."),
+  sq("¿Qué debe hacer el método con un parámetro `out` antes de terminar?", ["Asignarle un valor en todos los caminos", "Leer su valor anterior", "Dejarlo siempre en null", "Convertirlo en const"], 0, "El compilador exige que cada parámetro out quede asignado antes del retorno."),
+  sq("¿Qué diferencia principal hay entre `ref` y `out`?", ["ref entra inicializado; out puede entrar sin inicializar", "ref nunca puede modificarse; out solo se lee", "Ambos exigen inicialización previa", "out solo funciona con strings"], 0, "ref comunica entrada y posible modificación; out comunica un valor producido por el método."),
+  sq("¿Qué pasa con `int value; Update(ref value);`?", ["No compila porque value no está inicializada", "Compila y usa 0 automáticamente", "Se convierte en out", "Solo falla en runtime"], 0, "ref puede leer el valor recibido, por eso la variable debe inicializarse antes."),
+  sq("¿Qué pasa con `int value; Update(out value);` si Update asigna value?", ["Compila y value queda asignada por Update", "No compila por falta de inicialización", "value queda siempre null", "out ignora la asignación"], 0, "out está diseñado precisamente para que el método produzca el valor."),
+  sq("¿Qué modificador usarías para intentar actualizar una variable existente?", ["ref", "out siempre", "in", "readonly"], 0, "ref permite que el método lea y modifique la variable del llamador."),
+  sq("¿Qué afirmación es correcta sobre `out`?", ["No requiere valor inicial, pero el método debe asignarlo", "Requiere valor inicial y no puede cambiarlo", "Solo pasa una copia de lectura", "Permite omitir la asignación del método"], 0, "La ausencia de inicialización previa es válida, pero la asignación dentro del método es obligatoria."),
+];
+
+const structDefinition = definitions.find(d => d.id === "m07-structs");
+if (structDefinition) {
+  structDefinition.summary = "Un struct es un tipo valor que encapsula datos y comportamiento. La asignación copia la instancia completa; suele ser adecuado para datos pequeños con semántica de valor. Puede tener campos, propiedades, métodos, constructores e implementar interfaces, pero no hereda de clases.";
+  structDefinition.code = "struct WorkTask\n{\n    public string Description;\n    public int Hours;\n    public int TotalMinutes() => Hours * 60;\n}";
+  structDefinition.why = "La regla clave es valor frente a referencia: un struct se copia al asignarlo. No debe explicarse como un tipo que siempre vive en el stack; su ubicación depende del contexto y puede estar en el heap al hacer boxing.";
+}
+
+preciseM04["m07-structs"] = [
+  sq("Pregunta 1 · ¿Qué es realmente un `struct` en C#?", ["Un tipo valor que encapsula datos y comportamiento; cada variable contiene su propia copia", "Una clase ligera que siempre comparte una referencia", "Un namespace que solo puede contener campos", "Un tipo referencia que no puede tener métodos"], 0, "Un struct es un tipo valor. Puede encapsular campos, propiedades y métodos, y al asignarlo se copia la instancia; no es simplemente una clase con menos código.", "struct WorkTask\n{\n    public string Description;\n    public int Hours;\n    public int TotalMinutes() => Hours * 60;\n}"),
+  sq("Pregunta 2 · Si `WorkTask first = second;`, ¿qué ocurre con un struct?", ["Se copia el valor completo: cambiar `first` no cambia `second`", "first y second apuntan al mismo objeto", "La asignación solo copia el primer campo", "No se puede asignar un struct a otra variable"], 0, "Los structs tienen semántica de valor: la asignación copia todos sus datos. Esto contrasta con una class, donde normalmente se copia la referencia.", "WorkTask second = new WorkTask { Hours = 8 };\nWorkTask first = second;\nfirst.Hours = 4;\n// second.Hours sigue siendo 8"),
+  sq("¿Para qué tipo de dato suele ser apropiado un struct?", ["Un valor pequeño y relacionado, como un punto, color, medida o configuración", "Un objeto con una jerarquía compleja y mucha identidad mutable", "Una colección que debe compartir estado entre muchas variables", "Un servicio que administra conexiones durante toda la aplicación"], 0, "Microsoft recomienda structs para tipos pequeños, ligeros y con semántica de valor. No son la opción automática para cualquier clase."),
+  sq("¿Qué miembros puede contener un struct?", ["Campos, propiedades, métodos, constructores y otros miembros", "Solo campos públicos", "Solo un constructor sin parámetros", "Únicamente constantes"], 0, "Un struct puede contener datos y funcionalidad, de forma parecida a una class, aunque no admite todas las posibilidades de herencia de una clase."),
+  sq("¿Qué palabra clave se usa para declarar un tipo struct?", ["struct", "value", "recordOnly", "stack"], 0, "La declaración comienza con `struct`, seguida del nombre y el cuerpo entre llaves."),
+  sq("¿Cómo se crea una instancia de un struct?", ["Puede usarse `new`, igual que con una class", "Solo puede crearse mediante reflexión", "Nunca se instancia: todos sus miembros son static", "Debe heredarse de una class"], 0, "Un struct puede instanciarse con `new`; también existen formas de obtener su valor predeterminado."),
+  sq("¿Qué imprime este código?", ["1", "99", "0", "No compila porque los structs no se copian"], 0, "p2 recibe una copia de p1. Cambiar p2.X no modifica p1.X.", "struct Point { public int X; }\nvar p1 = new Point { X = 1 };\nvar p2 = p1;\np2.X = 99;\nConsole.WriteLine(p1.X);"),
+  sq("¿Puede un struct implementar una interfaz?", ["Sí, puede implementar interfaces", "No, solo las class pueden hacerlo", "Solo si hereda de otra struct", "Solo cuando todos sus campos son static"], 0, "Los structs no heredan de una class o de otro struct, pero sí pueden implementar interfaces."),
+  sq("¿Cuál afirmación sobre stack y heap es técnicamente correcta?", ["Un struct es un tipo valor; su ubicación depende del contexto y puede estar en el heap, por ejemplo al hacer boxing", "Todo struct vive siempre en el stack", "Todo struct vive siempre en el heap como una class", "El programador debe elegir manualmente stack o heap al declararlo"], 0, "La semántica importante es que es un tipo valor. La ubicación física no debe simplificarse como una regla absoluta: un struct puede estar inline, en el stack o en el heap según el contexto."),
+  sq("¿Qué riesgo aparece al usar un struct grande y mutable?", ["Las copias repetidas pueden ser costosas y la mutabilidad puede causar cambios inesperados en copias", "Se convierte automáticamente en una class", "Nunca puede pasarse como parámetro", "Sus métodos dejan de compilar"], 0, "Los structs se copian por valor. Por eso conviene que sean pequeños y, cuando sea posible, inmutables."),
+];
+
+const structCoreQuestions = preciseM04["m07-structs"];
+preciseM04["m07-structs"] = [
+  structCoreQuestions[0],
+  structCoreQuestions[1],
+  sq("¿Cuál es la diferencia de asignación entre un `struct` y una `class`?", ["Al copiar un struct se copian sus datos; al copiar una class normalmente se copia la referencia al mismo objeto", "Ambos siempre copian una referencia", "Ambos siempre comparten todos sus campos", "Una class no puede asignarse a otra variable"], 0, "Un struct tiene semántica de valor. Una class tiene semántica de referencia: dos variables pueden apuntar a la misma instancia."),
+  sq("¿Qué imprime este código con `class`?", ["99, porque a y b apuntan al mismo objeto", "1, porque una class siempre se copia por valor", "0, porque una class no puede tener campos", "No compila"], 0, "Al asignar una class se copia la referencia; modificar b también se observa a través de a.", "class Point { public int X; }\nvar a = new Point { X = 1 };\nvar b = a;\nb.X = 99;\nConsole.WriteLine(a.X);"),
+  sq("¿Qué imprime el equivalente usando `struct`?", ["1, porque b recibió una copia independiente", "99, porque ambos apuntan al mismo objeto", "0, porque un struct no puede tener campos", "No compila"], 0, "Al asignar un struct se copia la instancia completa; modificar b no cambia a.", "struct Point { public int X; }\nvar a = new Point { X = 1 };\nvar b = a;\nb.X = 99;\nConsole.WriteLine(a.X);"),
+  sq("¿Qué puede tener en común un `struct` con una `class`?", ["Ambos pueden declarar campos, propiedades y métodos", "Solo las class pueden tener métodos", "Solo los structs pueden tener campos", "Ninguno puede encapsular comportamiento"], 0, "Un struct no es solo un conjunto pasivo de datos: también puede incluir métodos y otros miembros."),
+  sq("En el demo `WorkTask`, ¿qué representa mejor el tipo creado?", ["Un tipo valor pequeño que agrupa Description, Hours y un método", "Una clase base para todas las tareas", "Una interfaz sin estado", "Un objeto global compartido"], 0, "WorkTask reúne datos relacionados y comportamiento simple; esa es una situación razonable para un struct pequeño.", "struct WorkTask\n{\n    public string Description;\n    public int Hours;\n    public void PerformWorkTask() { }\n}"),
+  sq("¿Es obligatorio usar `new` para declarar un struct local en todos los casos?", ["No siempre; puede declararse y asignarse correctamente, aunque `new` hace explícita la creación y la inicialización", "Sí, porque un struct siempre necesita un objeto en el heap", "No se puede usar `new` con structs", "Solo se puede crear mediante una class"], 0, "Un struct es un tipo valor y no necesita una instancia de referencia en el heap. Aun así, `new` es válido y suele hacer más clara la inicialización."),
+  sq("¿Cuándo suele ser mejor elegir una `class` en lugar de un `struct`?", ["Cuando el tipo tiene identidad, estado mutable complejo, herencia o una vida compartida", "Cuando solo contiene dos valores pequeños", "Cuando se necesita copia independiente por valor", "Cuando nunca tendrá métodos"], 0, "Las class son apropiadas para modelos con identidad o comportamiento complejo; los structs suelen reservarse para valores pequeños."),
+  sq("¿Cuál afirmación evita una confusión común sobre structs?", ["No son simplemente clases que siempre viven en el stack; son tipos valor y su ubicación depende del contexto", "Siempre viven exclusivamente en el stack", "Siempre viven exclusivamente en el heap", "No pueden implementarse ni copiarse"], 0, "La diferencia esencial es la semántica de valor frente a referencia, no una regla absoluta sobre stack y heap."),
+];
+
 function shuffleQuestionOptions(question: AdvancedQuestion, shift: number): AdvancedQuestion {
   const n = question.options.length;
   const options = question.options.map((_, k) => question.options[(k + shift) % n]);
