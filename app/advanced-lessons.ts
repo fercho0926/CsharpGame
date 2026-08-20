@@ -189,5 +189,22 @@ const preciseM04:Record<string,AdvancedQuestion[]>={
  ]
 };
 
+// preciseM04 se escribió originalmente con la respuesta correcta siempre en el
+// índice 0 de `options` (bug real: se podía "ganar" el módulo respondiendo
+// siempre la opción A, sin leer la pregunta). Esta rotación determinista
+// redistribuye la posición de la respuesta correcta entre A/B/C/D sin tocar
+// el texto de cada pregunta.
+function shuffleQuestionOptions(question: AdvancedQuestion, shift: number): AdvancedQuestion {
+  const n = question.options.length;
+  const options = question.options.map((_, k) => question.options[(k + shift) % n]);
+  const answer = (question.answer - shift + n) % n;
+  return { ...question, options, answer };
+}
+const hashKey = (key: string) => key.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+for (const key of Object.keys(preciseM04)) {
+  const offset = hashKey(key);
+  preciseM04[key] = preciseM04[key].map((question, qi) => shuffleQuestionOptions(question, (qi + offset) % question.options.length));
+}
+
 export const advancedSteps:AdvancedStep[] = definitions.map(d => ({ ...d, questions:preciseM04[d.id]||makeQuestions(d) }));
 if (advancedSteps.some(step => step.questions.length !== 10)) throw new Error("Cada paso debe tener exactamente 10 preguntas");
