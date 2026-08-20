@@ -9,6 +9,7 @@ const TAB_NAME = "Respuestas";
 
 function doPost(e) {
   const payload = JSON.parse(e.postData.contents || "{}");
+  if (payload.type === "progreso") return saveProgress_(payload.progress || {});
   const sheet = getSheet_();
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(["Fecha", "Tipo", "Módulo", "Paso", "Tema", "Pregunta", "Respuesta", "Correcta", "XP"]);
@@ -22,8 +23,31 @@ function doPost(e) {
 }
 
 function doGet() { return json_({ ok: true, app: "C# Quest" }); }
+function doGet(e) {
+  if (e && e.parameter && e.parameter.action === "progress") {
+    const sheet = getProgressSheet_();
+    if (sheet.getLastRow() < 2) return json_({ ok: true, progress: null });
+    return json_({ ok: true, progress: JSON.parse(sheet.getRange(2, 3).getValue() || "null") });
+  }
+  return json_({ ok: true, app: "C# Quest" });
+}
 
 function getSheet_() {
+
+  function getProgressSheet_() {
+    const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = spreadsheet.getSheetByName("Progreso") || spreadsheet.insertSheet("Progreso");
+    if (sheet.getLastRow() === 0) sheet.appendRow(["Clave", "Fecha", "Estado JSON"]);
+    return sheet;
+  }
+
+  function saveProgress_(progress) {
+    const sheet = getProgressSheet_();
+    const row = ["principal", new Date(), JSON.stringify(progress)];
+    if (sheet.getLastRow() < 2) sheet.appendRow(row);
+    else sheet.getRange(2, 1, 1, 3).setValues([row]);
+    return json_({ ok: true });
+  }
   const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
   return spreadsheet.getSheetByName(TAB_NAME) || spreadsheet.insertSheet(TAB_NAME);
 }

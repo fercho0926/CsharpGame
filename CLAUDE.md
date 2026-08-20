@@ -20,8 +20,8 @@ npm test
 - `app/lesson-viewer.tsx`: visor de pasos y preguntas.
 - `app/advanced-lessons.ts`: bancos de preguntas de módulos 4–10.
 - `app/study-topics.tsx`: glosario buscable de temas estudiados.
-- `app/google-sync.ts`: envío de respuestas a Google Sheets.
-- `google-apps-script/Code.gs`: endpoint Apps Script para guardar respuestas.
+- `app/google-sync.ts`: envío y carga del progreso desde Google Sheets.
+- `google-apps-script/Code.gs`: endpoint Apps Script para guardar respuestas y el estado actual.
 
 ## Reglas del producto
 
@@ -40,4 +40,4 @@ Divide el trabajo por módulos o pasos. Un agente puede investigar conceptos, ot
 
 ## Google Sheets
 
-El usuario debe copiar `google-apps-script/Code.gs` a Apps Script, colocar el ID de su hoja y desplegarlo como aplicación web. Luego pega la URL en la sección Google Sheets de la app.
+El usuario debe copiar `google-apps-script/Code.gs` a Apps Script, colocar el ID de su hoja y desplegarlo como aplicación web ejecutando como él y permitiendo acceso a cualquiera con el enlace. Luego pega la URL en la sección Google Sheets de la app. Las respuestas quedan en `Respuestas` y el estado sincronizado se guarda en `Progreso`; la app lo actualiza automáticamente y permite cargarlo manualmente desde otro dispositivo.
