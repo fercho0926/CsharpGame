@@ -4,7 +4,7 @@
 // 3. Pega este archivo y cambia SHEET_ID por el ID de tu hoja.
 // 4. Implementar → Nueva implementación → Aplicación web.
 // 5. Ejecutar como tú y permitir acceso a cualquiera con el enlace.
-const SHEET_ID = "PEGA_AQUI_EL_ID_DE_TU_HOJA";
+const SHEET_ID = "1vMIMabo8EcVYET41Cbe10Hva5J5fsBvDqu-YoEY-c_I";
 const TAB_NAME = "Respuestas";
 
 function doPost(e) {
@@ -22,7 +22,6 @@ function doPost(e) {
   return json_({ ok: true });
 }
 
-function doGet() { return json_({ ok: true, app: "C# Quest" }); }
 function doGet(e) {
   if (e && e.parameter && e.parameter.action === "progress") {
     const sheet = getProgressSheet_();
@@ -33,23 +32,55 @@ function doGet(e) {
 }
 
 function getSheet_() {
-
-  function getProgressSheet_() {
-    const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
-    const sheet = spreadsheet.getSheetByName("Progreso") || spreadsheet.insertSheet("Progreso");
-    if (sheet.getLastRow() === 0) sheet.appendRow(["Clave", "Fecha", "Estado JSON"]);
-    return sheet;
-  }
-
-  function saveProgress_(progress) {
-    const sheet = getProgressSheet_();
-    const row = ["principal", new Date(), JSON.stringify(progress)];
-    if (sheet.getLastRow() < 2) sheet.appendRow(row);
-    else sheet.getRange(2, 1, 1, 3).setValues([row]);
-    return json_({ ok: true });
-  }
   const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
   return spreadsheet.getSheetByName(TAB_NAME) || spreadsheet.insertSheet(TAB_NAME);
+}
+
+function getProgressSheet_() {
+  const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = spreadsheet.getSheetByName("Progreso") || spreadsheet.insertSheet("Progreso");
+  if (sheet.getLastRow() === 0) sheet.appendRow(["Clave", "Fecha", "Estado JSON"]);
+  return sheet;
+}
+
+function saveProgress_(progress) {
+  const sheet = getProgressSheet_();
+  let merged = progress;
+  if (sheet.getLastRow() >= 2) {
+    const previous = JSON.parse(sheet.getRange(2, 3).getValue() || "{}");
+    merged = mergeProgress_(previous, progress);
+  }
+  const row = ["principal", new Date(), JSON.stringify(merged)];
+  if (sheet.getLastRow() < 2) sheet.appendRow(row);
+  else sheet.getRange(2, 1, 1, 3).setValues([row]);
+  return json_({ ok: true });
+}
+
+function mergeProgress_(previous, incoming) {
+  const mergedMastered = Object.assign({}, previous.mastered || {});
+  Object.keys(incoming.mastered || {}).forEach(function(topic) {
+    mergedMastered[topic] = Array.from(new Set([
+      ...(mergedMastered[topic] || []),
+      ...(incoming.mastered[topic] || [])
+    ]));
+  });
+
+  const previousSteps = previous.completedSteps || [];
+  const incomingSteps = incoming.completedSteps || [];
+  const latest = new Date(incoming.updatedAt || 0) >= new Date(previous.updatedAt || 0)
+    ? incoming
+    : previous;
+
+  return Object.assign({}, latest, {
+    xp: Math.max(Number(previous.xp) || 0, Number(incoming.xp) || 0),
+    streak: Math.max(Number(previous.streak) || 0, Number(incoming.streak) || 0),
+    completed: Math.max(Number(previous.completed) || 0, Number(incoming.completed) || 0),
+    correct: Math.max(Number(previous.correct) || 0, Number(incoming.correct) || 0),
+    mastered: mergedMastered,
+    completedSteps: Array.from(new Set(previousSteps.concat(incomingSteps))),
+    moduleDone: previous.moduleDone === true || incoming.moduleDone === true,
+    updatedAt: new Date().toISOString()
+  });
 }
 
 function json_(data) {
