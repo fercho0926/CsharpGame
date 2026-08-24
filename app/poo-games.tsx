@@ -140,6 +140,7 @@ export function PooGames() {
   const [selected, setSelected] = useState<string | null>(null);
   const [correct, setCorrect] = useState(0);
   const [notice, setNotice] = useState("");
+  const [finished, setFinished] = useState(false);
 
   useEffect(() => {
     try {
@@ -160,6 +161,7 @@ export function PooGames() {
     setCorrect(0);
     setSelected(null);
     setNotice("");
+    setFinished(false);
   };
 
   const answer = (option: string) => {
@@ -169,6 +171,7 @@ export function PooGames() {
   };
 
   const next = () => {
+    if (!selected || finished) return;
     const result = selected === challenge.answer ? correct + 1 : correct;
     if (index < active.challenges.length - 1) {
       setIndex(value => value + 1);
@@ -176,6 +179,8 @@ export function PooGames() {
       setCorrect(result);
       return;
     }
+    setCorrect(result);
+    setFinished(true);
     if (result === active.challenges.length) {
       const nextMastery = Array.from(new Set([...mastered, active.id]));
       setMastered(nextMastery);
@@ -191,6 +196,7 @@ export function PooGames() {
     setCorrect(0);
     setSelected(null);
     setNotice("");
+    setFinished(false);
   };
 
   return <section className="games-section">
@@ -206,9 +212,19 @@ export function PooGames() {
       <div className="game-panel-head"><div><p className="eyebrow">MISIÓN {activePosition + 1} · RETO {index + 1} DE {active.challenges.length}</p><h3>{active.name}</h3><p>{active.mission}</p></div><button className="game-reset" onClick={reset}>Reiniciar</button></div>
       <div className="game-progress"><div style={{ width: `${((index + (selected ? 1 : 0)) / active.challenges.length) * 100}%` }} /></div>
       <div className="game-challenge"><p className="game-prompt">{challenge.prompt}</p><pre>{challenge.code}</pre><div className="game-options">{challenge.options.map((option, optionIndex) => <button key={option} className={`game-option ${selected && option === challenge.answer ? "right" : ""} ${selected === option && option !== challenge.answer ? "wrong" : ""}`} onClick={() => answer(option)} disabled={Boolean(selected)}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}</button>)}</div>{selected && <div className={`game-feedback ${selected === challenge.answer ? "good" : "bad"}`}><strong>{selected === challenge.answer ? "¡Correcto!" : "Buen intento, revisemos."}</strong><p>{challenge.explanation}</p></div>}</div>
-      {selected && (index < active.challenges.length - 1 || notice) && <button className="primary-cta game-next" onClick={next}>{index < active.challenges.length - 1 ? "Siguiente reto" : "Terminar misión"}<span>→</span></button>}
+      {selected && <button className="primary-cta game-next" onClick={next} disabled={finished}>{index < active.challenges.length - 1 ? "Siguiente reto" : "Terminar misión"}<span>→</span></button>}
       {notice && <div className={`game-notice ${mastered.includes(active.id) ? "mastered" : "retry"}`}><strong>{notice}</strong>{mastered.includes(active.id) && activePosition < pillars.length - 1 && <button onClick={() => choosePillar(pillars[activePosition + 1])}>Jugar siguiente pilar →</button>}</div>}
     </div>
     <div className="games-rule"><span>✓</span><p><b>Regla de dominio:</b> una misión solo se marca como completada con 10/10 respuestas correctas. Si fallas, puedes reiniciarla y repetirla hasta que el concepto quede claro.</p></div>
+  </section>;
+}
+
+export function GamesHub() {
+  const [module, setModule] = useState<"poo" | "future">("poo");
+
+  return <section className="games-hub">
+    <div className="games-hub-head"><div><p className="eyebrow">ARCADE DE APRENDIZAJE</p><h2>Juega para aprender, <span>aprende para recordar.</span></h2><p>Elige un módulo. Iremos agregando nuevos juegos y habilidades sin mezclar sus progresos.</p></div><div className="games-hub-badge">Módulos activos <b>1</b></div></div>
+    <nav className="game-modules" aria-label="Módulos de juegos"><button className={module === "poo" ? "active" : ""} onClick={() => setModule("poo")}><span className="module-game-icon">◈</span><span><b>POO</b><small>4 pilares · 40 preguntas</small></span><strong>→</strong></button><button className={module === "future" ? "active" : ""} onClick={() => setModule("future")}><span className="module-game-icon future">+</span><span><b>Próximamente</b><small>Nuevos juegos y retos</small></span><strong>→</strong></button></nav>
+    {module === "poo" ? <PooGames/> : <div className="future-games"><div>✦</div><h3>Más módulos en camino</h3><p>Aquí agregaremos juegos de SOLID, LINQ, async/await y entrevistas .NET.</p><button className="primary-cta" onClick={() => setModule("poo")}>Volver a POO <span>→</span></button></div>}
   </section>;
 }
