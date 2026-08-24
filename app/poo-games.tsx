@@ -133,6 +133,49 @@ const pillars: Pillar[] = [
 
 const masteryKey = "csharp-quest-poo-mastery-v2";
 
+const contractChallenges: Challenge[] = [
+  { prompt: "¿Qué define mejor una interfaz en C#?", code: "public interface IPlayable {\n  void Play();\n}", options: ["Un contrato de capacidades", "Una instancia lista para usar", "Una base de datos", "Un campo compartido"], answer: "Un contrato de capacidades", explanation: "Una interfaz dice qué debe poder hacer un tipo, sin obligarlo a compartir una implementación concreta." },
+  { prompt: "¿Qué palabra indica que una clase cumple una interfaz?", code: "public class Robot : ___ { }", options: ["IPlayable", "abstract", "base", "contract"], answer: "IPlayable", explanation: "La clase declara la interfaz después de los dos puntos y debe implementar sus miembros." },
+  { prompt: "¿Qué puede contener una clase abstracta?", code: "public abstract class Animal {\n  public abstract void Speak();\n  public void Sleep() { ... }\n}", options: ["Métodos abstractos y métodos con código", "Solo constantes", "Solo interfaces", "Ningún método"], answer: "Métodos abstractos y métodos con código", explanation: "Una clase abstracta puede mezclar un contrato incompleto con comportamiento compartido." },
+  { prompt: "¿Se puede hacer new directamente de una clase abstracta?", code: "var shape = new AbstractShape();", options: ["No", "Sí, siempre", "Solo si tiene var", "Solo desde otra app"], answer: "No", explanation: "Una clase abstracta es una base para otras clases; necesita una clase concreta derivada para crear objetos." },
+  { prompt: "Un tipo necesita volar y también guardar datos comunes de Animal. ¿Qué diseño es posible?", code: "class Bird : Animal, ___ { }", options: ["IFlyable", "Animal2", "abstract2", "BaseOnly"], answer: "IFlyable", explanation: "Una clase puede heredar de una clase base y además implementar una o varias interfaces." },
+  { prompt: "¿Qué usarías si distintas clases no comparten código, pero sí una capacidad?", code: "interface ___ { void Export(); }", options: ["IExportable", "ExportBase", "ExportClass", "AbstractOnly"], answer: "IExportable", explanation: "Una interfaz es ideal para compartir una capacidad sin forzar una jerarquía ni código común." },
+  { prompt: "¿Qué usarías si varias clases comparten validación y estado?", code: "abstract class ___ {\n  protected string Id;\n}", options: ["Entity", "IEntity", "Contract", "Capability"], answer: "Entity", explanation: "Una clase abstracta permite centralizar estado y comportamiento que las clases hijas reutilizan." },
+  { prompt: "¿Cuál es una diferencia importante?", code: "class Payment : IPayment, IAuditable { }", options: ["Una clase puede implementar varias interfaces", "Una clase hereda de muchas clases", "Una interfaz siempre tiene estado", "Una abstracta no tiene métodos"], answer: "Una clase puede implementar varias interfaces", explanation: "C# permite heredar de una clase base, pero una clase puede cumplir múltiples contratos de interfaz." },
+  { prompt: "¿Qué obliga a implementar un método sin entregar su código?", code: "public abstract ___ Calculate();", options: ["Un miembro abstracto", "Un campo privado", "Un constructor", "Un namespace"], answer: "Un miembro abstracto", explanation: "El miembro abstracto define una obligación; la clase concreta debe escribir la implementación." },
+  { prompt: "¿Cuál diseño comunica mejor “todo reporte debe renderizarse”, sin compartir código?", code: "public interface IReport {\n  string Render();\n}", options: ["Una interfaz", "Una variable global", "Una clase sellada", "Un método static solamente"], answer: "Una interfaz", explanation: "IReport expresa una capacidad común y permite que reportes no relacionados la implementen de formas distintas." },
+];
+
+function ContractsGame() {
+  const [index, setIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [correct, setCorrect] = useState(0);
+  const [mastered, setMastered] = useState(false);
+  const [notice, setNotice] = useState("");
+  const challenge = contractChallenges[index];
+
+  useEffect(() => {
+    setMastered(localStorage.getItem("csharp-quest-contracts-mastery-v1") === "true");
+  }, []);
+
+  const reset = () => { setIndex(0); setSelected(null); setCorrect(0); setNotice(""); setMastered(false); };
+  const answer = (option: string) => { if (!selected) setSelected(option); };
+  const next = () => {
+    if (!selected) return;
+    const result = correct + (selected === challenge.answer ? 1 : 0);
+    if (index < contractChallenges.length - 1) { setCorrect(result); setIndex(value => value + 1); setSelected(null); return; }
+    setCorrect(result);
+    if (result === contractChallenges.length) { setMastered(true); localStorage.setItem("csharp-quest-contracts-mastery-v1", "true"); setNotice("¡Módulo dominado! Ya distingues contratos de capacidades y bases con comportamiento compartido."); }
+    else setNotice("Reinicia el módulo y vuelve a intentarlo: necesitas 10/10 para marcarlo como dominado.");
+  };
+
+  return <div className="contract-game">
+    <div className="contract-definitions"><div className="contract-definition interface"><div className="definition-label">INTERFACE</div><h3>Un contrato</h3><p><b>Técnica:</b> define capacidades que una clase se compromete a cumplir, sin exigir una clase base común.</p><p><b>Para 14 años:</b> es como una lista de reglas para entrar a un equipo: “si quieres jugar, debes poder hacer estas cosas”.</p><pre>interface IPlayable {'{'}{`\n  void Play();\n`}{'}'}</pre></div><div className="contract-definition abstract"><div className="definition-label">CLASE ABSTRACTA</div><h3>Una base incompleta</h3><p><b>Técnica:</b> sirve como base no instanciable y puede combinar miembros abstractos con estado y comportamiento compartido.</p><p><b>Para 14 años:</b> es como un molde de familia: trae algunas piezas listas, pero cada hijo debe completar lo que le falta.</p><pre>abstract class Animal {'{'}{`\n  public abstract void Speak();\n`}{'}'}</pre></div></div>
+    <div className="comparison-note"><b>Regla rápida:</b> usa interfaz para decir “puede hacer”; usa clase abstracta para decir “es una versión de” y compartir código.</div>
+    <div className="game-panel"><div className="game-panel-head"><div><p className="eyebrow">RETO {index + 1} DE {contractChallenges.length}</p><h3>Interfaces vs abstractas</h3><p>Identifica el contrato o la base correcta en cada situación.</p></div><button className="game-reset" onClick={reset}>Reiniciar</button></div><div className="game-progress"><div style={{ width: `${((index + (selected ? 1 : 0)) / contractChallenges.length) * 100}%` }} /></div><div className="game-challenge"><p className="game-prompt">{challenge.prompt}</p><pre>{challenge.code}</pre><div className="game-options">{challenge.options.map((option, optionIndex) => <button key={option} className={`game-option ${selected && option === challenge.answer ? "right" : ""} ${selected === option && option !== challenge.answer ? "wrong" : ""}`} onClick={() => answer(option)} disabled={Boolean(selected)}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}</button>)}</div>{selected && <div className={`game-feedback ${selected === challenge.answer ? "good" : "bad"}`}><strong>{selected === challenge.answer ? "¡Correcto!" : "Buen intento, revisemos."}</strong><p>{challenge.explanation}</p></div>}</div>{selected && !notice && <button className="primary-cta game-next" onClick={next}>{index < contractChallenges.length - 1 ? "Siguiente reto" : "Terminar módulo"}<span>→</span></button>}{notice && <div className={`game-notice ${mastered ? "mastered" : "retry"}`}><strong>{notice}</strong></div>}</div>
+  </div>;
+}
+
 export function PooGames() {
   const [mastered, setMastered] = useState<PillarId[]>([]);
   const [activeId, setActiveId] = useState<PillarId>("encapsulamiento");
@@ -219,11 +262,11 @@ export function PooGames() {
 }
 
 export function GamesHub() {
-  const [module, setModule] = useState<"poo" | "future">("poo");
+  const [module, setModule] = useState<"poo" | "contracts" | "future">("poo");
 
   return <section className="games-hub">
     <div className="games-hub-head"><div><p className="eyebrow">ARCADE DE APRENDIZAJE</p><h2>Juega para aprender, <span>aprende para recordar.</span></h2><p>Elige un módulo. Iremos agregando nuevos juegos y habilidades sin mezclar sus progresos.</p></div><div className="games-hub-badge">Módulos activos <b>1</b></div></div>
-    <nav className="game-modules" aria-label="Módulos de juegos"><button className={module === "poo" ? "active" : ""} onClick={() => setModule("poo")}><span className="module-game-icon">◈</span><span><b>POO</b><small>4 pilares · 40 preguntas</small></span><strong>→</strong></button><button className={module === "future" ? "active" : ""} onClick={() => setModule("future")}><span className="module-game-icon future">+</span><span><b>Próximamente</b><small>Nuevos juegos y retos</small></span><strong>→</strong></button></nav>
-    {module === "poo" ? <PooGames/> : <div className="future-games"><div>✦</div><h3>Más módulos en camino</h3><p>Aquí agregaremos juegos de SOLID, LINQ, async/await y entrevistas .NET.</p><button className="primary-cta" onClick={() => setModule("poo")}>Volver a POO <span>→</span></button></div>}
+    <nav className="game-modules" aria-label="Módulos de juegos"><button className={module === "poo" ? "active" : ""} onClick={() => setModule("poo")}><span className="module-game-icon">◈</span><span><b>POO</b><small>4 pilares · 40 preguntas</small></span><strong>→</strong></button><button className={module === "contracts" ? "active" : ""} onClick={() => setModule("contracts")}><span className="module-game-icon contracts">⌘</span><span><b>Interfaces y abstractas</b><small>10 preguntas · comparación</small></span><strong>→</strong></button><button className={module === "future" ? "active" : ""} onClick={() => setModule("future")}><span className="module-game-icon future">+</span><span><b>Próximamente</b><small>Nuevos juegos y retos</small></span><strong>→</strong></button></nav>
+    {module === "poo" ? <PooGames/> : module === "contracts" ? <ContractsGame/> : <div className="future-games"><div>✦</div><h3>Más módulos en camino</h3><p>Aquí agregaremos juegos de SOLID, LINQ, async/await y entrevistas .NET.</p><button className="primary-cta" onClick={() => setModule("poo")}>Volver a POO <span>→</span></button></div>}
   </section>;
 }
