@@ -167,7 +167,6 @@ export function PooGames() {
   const answer = (option: string) => {
     if (selected) return;
     setSelected(option);
-    if (option === challenge.answer) setCorrect(value => value + 1);
   };
 
   const next = () => {
