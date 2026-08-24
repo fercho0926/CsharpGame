@@ -10,7 +10,7 @@ type Challenge = {
   answer: string;
   explanation: string;
 };
-type AccessRule = { modifier: string; reach: string; example: string; memory: string };
+type ConceptRule = { term: string; reach: string; example: string; memory: string };
 type Pillar = {
   id: PillarId;
   name: string;
@@ -22,7 +22,9 @@ type Pillar = {
   technical: string;
   kid: string;
   example: string;
-  accessGuide?: AccessRule[];
+  guideTitle?: string;
+  guideIntro?: string;
+  accessGuide?: ConceptRule[];
   challenges: Challenge[];
 };
 
@@ -38,13 +40,15 @@ const pillars: Pillar[] = [
     technical: "Técnica: agrupa el estado y el comportamiento de un objeto, restringiendo el acceso directo para proteger sus invariantes.",
     kid: "Para un niño: imagina una mochila con cierre. Puedes usar lo que hay dentro mediante reglas, pero no cualquiera puede abrirla y revolverla.",
     example: "Vida de un videojuego: el jugador no cambia directamente sus corazones; llama a RecibirDaño() y el objeto decide si pierde una vida.",
+    guideTitle: "¿Quién puede ver o usar cada miembro?",
+    guideIntro: "Concede el acceso mínimo necesario: así proteges mejor el estado.",
     accessGuide: [
-      { modifier: "private", reach: "Solo la clase que lo declara", example: "private decimal balance;", memory: "Privado = mi caja fuerte" },
-      { modifier: "protected", reach: "La clase y sus clases derivadas", example: "protected int score;", memory: "Protegido = familia heredada" },
-      { modifier: "internal", reach: "Cualquier código del mismo proyecto/assembly", example: "internal class Report { }", memory: "Interno = dentro del proyecto" },
-      { modifier: "public", reach: "Cualquier código que pueda acceder al tipo", example: "public void Deposit();", memory: "Público = puerta abierta" },
-      { modifier: "protected internal", reach: "Mismo assembly O una clase derivada", example: "protected internal void Reset();", memory: "Protegido o interno" },
-      { modifier: "private protected", reach: "Clase derivada, pero solo dentro del mismo assembly", example: "private protected int Id;", memory: "Privado protegido = familia cercana" },
+      { term: "private", reach: "Solo la clase que lo declara", example: "private decimal balance;", memory: "Privado = mi caja fuerte" },
+      { term: "protected", reach: "La clase y sus clases derivadas", example: "protected int score;", memory: "Protegido = familia heredada" },
+      { term: "internal", reach: "Cualquier código del mismo proyecto/assembly", example: "internal class Report { }", memory: "Interno = dentro del proyecto" },
+      { term: "public", reach: "Cualquier código que pueda acceder al tipo", example: "public void Deposit();", memory: "Público = puerta abierta" },
+      { term: "protected internal", reach: "Mismo assembly O una clase derivada", example: "protected internal void Reset();", memory: "Protegido o interno" },
+      { term: "private protected", reach: "Clase derivada, pero solo dentro del mismo assembly", example: "private protected int Id;", memory: "Privado protegido = familia cercana" },
     ],
     challenges: [
       { prompt: "Un saldo no debe poder cambiarse desde fuera de la cuenta. ¿Cuál diseño es correcto?", code: "class Account {\n  ___ decimal balance;\n  public void Deposit(decimal amount) { ... }\n}", options: ["public", "private", "static", "internal"], answer: "private", explanation: "private oculta el estado. La clase controla los cambios a través de métodos como Deposit." },
@@ -81,6 +85,16 @@ const pillars: Pillar[] = [
     technical: "Técnica: modela las características esenciales mediante contratos y oculta los detalles de implementación que no necesita el consumidor.",
     kid: "Para un niño: un control remoto tiene botones para subir volumen, pero no necesitas saber cómo funcionan los cables por dentro.",
     example: "Una interfaz IPayment dice Pay(amount). La tienda usa ese contrato sin conocer si el pago se hace con tarjeta, efectivo o una app.",
+    guideTitle: "¿Qué parte esencial debo mostrar?",
+    guideIntro: "La abstracción reduce la complejidad: muestra el qué y oculta el cómo.",
+    accessGuide: [
+      { term: "qué", reach: "La capacidad que el consumidor necesita", example: "payment.Pay(amount);", memory: "Qué = la acción útil" },
+      { term: "contrato", reach: "La regla que las implementaciones deben cumplir", example: "interface IPayment", memory: "Contrato = promesa" },
+      { term: "cómo", reach: "Los detalles internos quedan ocultos", example: "validación + API + reintentos", memory: "Cómo = detrás del telón" },
+      { term: "interfaz", reach: "Una forma clara de usar distintas implementaciones", example: "void Checkout(IPayment payment)", memory: "Interfaz = enchufe compatible" },
+      { term: "clase abstracta", reach: "Una base parcial que comparte reglas y deja partes pendientes", example: "abstract class Report", memory: "Abstracta = plano incompleto" },
+      { term: "buena abstracción", reach: "Pocas operaciones enfocadas y fáciles de entender", example: "mailer.SendEmail(to, body);", memory: "Simple por fuera, capaz por dentro" },
+    ],
     challenges: [
       { prompt: "El cliente solo necesita pedir un pago. ¿Qué debería conocer?", code: "public interface IPayment {\n  ___ Pay(decimal amount);\n}", options: ["El contrato", "La conexión SQL", "Los reintentos internos", "Todos los campos"], answer: "El contrato", explanation: "La abstracción expone qué se puede hacer, no cómo se implementa internamente." },
       { prompt: "¿Qué miembro expresa mejor una capacidad esencial de un reporte?", code: "public abstract class Report {\n  public abstract ___ Render();\n}", options: ["string", "private", "database", "constructor"], answer: "string", explanation: "Render representa el resultado esencial. Cada tipo concreto decide cómo construir ese string." },
@@ -107,6 +121,16 @@ const pillars: Pillar[] = [
     technical: "Técnica: permite crear tipos derivados que reutilizan y especializan miembros de una clase base, expresando una relación es-un.",
     kid: "Para un niño: una bicicleta y una moto son vehículos. Comparten cosas como moverse, pero cada una puede hacerlo de una forma diferente.",
     example: "Animal puede ser la clase base; Dog hereda de Animal y agrega Bark(), porque un perro es un animal.",
+    guideTitle: "¿Cuándo tiene sentido heredar?",
+    guideIntro: "La herencia expresa una relación “es-un”: una clase hija es una versión especializada de su base.",
+    accessGuide: [
+      { term: "base", reach: "Define lo común para varios tipos", example: "class Vehicle { Move(); }", memory: "Base = lo compartido" },
+      { term: "derivada", reach: "Reutiliza y especializa la clase base", example: "class Car : Vehicle", memory: "Hija = base + especialidad" },
+      { term: "es-un", reach: "La hija realmente puede tratarse como la base", example: "Dog es un Animal", memory: "Es-un, no tiene-un" },
+      { term: "protected", reach: "Comparte detalles seleccionados con las clases hijas", example: "protected string Id;", memory: "Familia con acceso controlado" },
+      { term: "override", reach: "Cambia una implementación virtual heredada", example: "public override void Move()", memory: "Override = versión especializada" },
+      { term: "composición", reach: "Alternativa cuando un objeto usa otro, pero no es ese tipo", example: "Car tiene un Engine", memory: "Tiene-un = composición" },
+    ],
     challenges: [
       { prompt: "Dog es un Animal y necesita el comportamiento común de Animal. ¿Qué sintaxis usas?", code: "public class Dog ___ Animal { }", options: [":", "=>", "implements", "extends"], answer: ":", explanation: "En C#, dos puntos indican la clase base y las interfaces que implementa el tipo." },
       { prompt: "La clase hija cambia una implementación virtual heredada. ¿Qué palabra clave necesita?", code: "public ___ void Speak() { ... }", options: ["override", "overload", "replace", "inherit"], answer: "override", explanation: "override reemplaza el comportamiento virtual de la clase base manteniendo el contrato polimórfico." },
@@ -133,6 +157,16 @@ const pillars: Pillar[] = [
     technical: "Técnica: permite tratar objetos de tipos diferentes mediante un mismo contrato, mientras cada implementación responde con su comportamiento propio.",
     kid: "Para un niño: si dices “habla” a un perro, un gato o un robot, todos responden, pero cada uno lo hace con un sonido distinto.",
     example: "Una lista de IShape puede contener Circle y Rectangle. Al llamar Draw(), cada figura se dibuja según su propia implementación.",
+    guideTitle: "¿Cómo funciona una llamada polimórfica?",
+    guideIntro: "Usas un mismo contrato y cada objeto decide qué comportamiento concreto ejecutar.",
+    accessGuide: [
+      { term: "contrato", reach: "La operación común que el consumidor conoce", example: "item.Play();", memory: "Una llamada común" },
+      { term: "tipo real", reach: "La clase concreta que existe en memoria", example: "new Dog()", memory: "El objeto sabe quién es" },
+      { term: "virtual", reach: "Marca una conducta que puede especializarse", example: "public virtual void Speak()", memory: "Virtual = puede variar" },
+      { term: "override", reach: "Implementa la respuesta propia de la clase hija", example: "public override void Speak()", memory: "Cada tipo responde a su manera" },
+      { term: "despacho dinámico", reach: "En ejecución se elige la versión del objeto real", example: "Animal a = new Dog(); a.Speak();", memory: "La referencia llama, el objeto decide" },
+      { term: "beneficio", reach: "Agregas tipos nuevos sin llenar el código de if por tipo", example: "Send(INotification notification)", memory: "Extender sin romper" },
+    ],
     challenges: [
       { prompt: "Quieres procesar EmailNotification y SmsNotification sin preguntar el tipo concreto. ¿Qué recibes?", code: "void Send( ___ notification) {\n  notification.Deliver();\n}", options: ["INotification", "EmailNotification", "object", "dynamic"], answer: "INotification", explanation: "El consumidor depende de la interfaz. Cada implementación resuelve Deliver con su propia forma." },
       { prompt: "¿Qué salida demuestra despacho dinámico?", code: "Animal pet = new Dog();\npet.Speak();", options: ["La versión de Dog", "Siempre la versión de Animal", "No compila", "Ambas a la vez"], answer: "La versión de Dog", explanation: "Con un método virtual, la implementación concreta se elige en tiempo de ejecución." },
@@ -302,7 +336,7 @@ export function PooGames() {
       {pillars.map((pillar, pillarIndex) => <button key={pillar.id} className={`pillar-chip ${active.id === pillar.id ? "active" : ""} ${mastered.includes(pillar.id) ? "done" : ""} ${unlocked(pillar) ? "" : "locked"}`} onClick={() => choosePillar(pillar)} disabled={!unlocked(pillar)}><span className={`pillar-chip-icon ${pillar.color}`}>{mastered.includes(pillar.id) ? "✓" : pillar.icon}</span><span><b>{pillarIndex + 1}. {pillar.name}</b><small>{mastered.includes(pillar.id) ? "Dominado" : unlocked(pillar) ? pillar.short : pillar.unlock}</small></span></button>)}
     </div>
     <div className="concept-card"><div className={`concept-icon ${active.color}`}>{active.icon}</div><div><p className="eyebrow">ENTIENDE ANTES DE JUGAR</p><h3>{active.name}</h3><p><b>Definición técnica:</b> {active.technical.replace("Técnica: ", "")}</p><p><b>Explicado para 14 años:</b> {active.kid.replace("Para un niño: ", "")}</p><div className="concept-example"><b>Ejemplo:</b> {active.example}</div></div></div>
-    {active.accessGuide && <div className="access-guide"><div className="access-guide-head"><div><p className="eyebrow">MAPA DE ACCESO</p><h3>¿Quién puede ver o usar cada miembro?</h3></div><p>Concede el acceso mínimo necesario: así proteges mejor el estado.</p></div><div className="access-grid">{active.accessGuide.map(rule => <article className="access-rule" key={rule.modifier}><code>{rule.modifier}</code><strong>{rule.reach}</strong><span>{rule.example}</span><small>{rule.memory}</small></article>)}</div></div>}
+    {active.accessGuide && <div className="access-guide"><div className="access-guide-head"><div><p className="eyebrow">{active.id === "encapsulamiento" ? "MAPA DE ACCESO" : "MAPA DEL CONCEPTO"}</p><h3>{active.guideTitle}</h3></div><p>{active.guideIntro}</p></div><div className="access-grid">{active.accessGuide.map(rule => <article className="access-rule" key={rule.term}><code>{rule.term}</code><strong>{rule.reach}</strong><span>{rule.example}</span><small>{rule.memory}</small></article>)}</div></div>}
     <div className="game-panel">
       <div className="game-panel-head"><div><p className="eyebrow">MISIÓN {activePosition + 1} · RETO {index + 1} DE {active.challenges.length}</p><h3>{active.name}</h3><p>{active.mission}</p></div><button className="game-reset" onClick={reset}>Reiniciar</button></div>
       <div className="game-progress"><div style={{ width: `${((index + (selected ? 1 : 0)) / active.challenges.length) * 100}%` }} /></div>
