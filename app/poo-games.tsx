@@ -176,6 +176,37 @@ function ContractsGame() {
   </div>;
 }
 
+const interviewChallenges: Challenge[] = [
+  { prompt: "Trampa: una clase tiene un campo public List<string> Items. ¿Qué pilar está debilitado?", code: "order.Items.Add(\"hack\");", options: ["Encapsulamiento", "Herencia", "Polimorfismo", "Abstracción"], answer: "Encapsulamiento", explanation: "Exponer una colección mutable permite saltarse las reglas del objeto. La solución es protegerla y ofrecer operaciones controladas." },
+  { prompt: "Una interfaz tiene 20 métodos y cada clase implementadora usa solo 2. ¿Qué principio estás rompiendo?", code: "interface IEverything { /* 20 métodos */ }", options: ["Segregación de interfaces", "Herencia múltiple", "Encapsulamiento", "Sustitución de strings"], answer: "Segregación de interfaces", explanation: "Una interfaz debe ser pequeña y enfocada. Los clientes no deberían depender de métodos que no necesitan." },
+  { prompt: "Trampa: ¿qué imprime este código si Speak es virtual y Dog lo sobrescribe?", code: "Animal a = new Dog();\na.Speak();", options: ["La versión de Dog", "La versión de Animal siempre", "No compila", "Las dos versiones"], answer: "La versión de Dog", explanation: "La referencia es Animal, pero el objeto real es Dog. El despacho virtual elige la implementación concreta." },
+  { prompt: "PaymentService recibe CardPayment directamente y no acepta WalletPayment. ¿Qué mejora aplica?", code: "void Pay(CardPayment payment) { ... }", options: ["Depender de una abstracción", "Hacer CardPayment global", "Agregar más if", "Copiar la clase"], answer: "Depender de una abstracción", explanation: "Recibir IPayment permite agregar formas de pago sin acoplar el servicio a una clase concreta." },
+  { prompt: "Trampa: ¿una clase abstracta puede tener un constructor?", code: "abstract class Animal {\n  protected Animal(string name) { }\n}", options: ["Sí, para inicializar la base", "No, nunca", "Solo si es static", "Solo si no tiene hijos"], answer: "Sí, para inicializar la base", explanation: "No puedes hacer new de la clase abstracta, pero su constructor se ejecuta cuando nace una clase derivada." },
+  { prompt: "Dog hereda de Animal solo para reutilizar un método, pero Dog no es realmente un Animal. ¿Qué conviene?", code: "class Dog : UtilityClass { }", options: ["Composición", "Más herencia", "Hacer todo public", "Una variable global"], answer: "Composición", explanation: "Si no existe una relación es-un, una clase que tiene y usa otra comunica mejor el diseño." },
+  { prompt: "¿Cuál opción representa mejor polimorfismo y no solo sobrecarga?", code: "IShape shape = new Circle();\nshape.Draw();", options: ["La implementación cambia según el objeto real", "Dos métodos con distintos parámetros", "Un campo privado", "Una clase sin métodos"], answer: "La implementación cambia según el objeto real", explanation: "La sobrecarga elige por firma; el polimorfismo elige la conducta detrás de un contrato común." },
+  { prompt: "Trampa: una interfaz puede tener métodos con implementación por defecto en C# moderno. ¿Eso la convierte en clase abstracta?", code: "interface ILogger {\n  void Log() => Console.WriteLine(\"ok\");\n}", options: ["No, sigue siendo un contrato y no una clase base", "Sí, son idénticas", "Sí, puede usar new", "No puede compilar nunca"], answer: "No, sigue siendo un contrato y no una clase base", explanation: "Una interfaz puede incluir implementaciones por defecto, pero no se convierte en una clase instanciable con estado de instancia compartido." },
+  { prompt: "Una subclase necesita lanzar una excepción donde la base prometía aceptar cualquier valor válido. ¿Qué alerta aparece?", code: "Base b = new Child();\nb.Process(validInput);", options: ["Posible violación de Liskov", "Falta de namespace", "Sobrecarga correcta", "Encapsulamiento perfecto"], answer: "Posible violación de Liskov", explanation: "Un subtipo debe poder sustituir a su base sin romper las expectativas del contrato." },
+  { prompt: "¿Qué respuesta suena bien en entrevista para elegir interfaz o abstracta?", code: "class Report : ??? { }", options: ["Interfaz para capacidad; abstracta para identidad y código común", "Siempre interfaz", "Siempre abstracta", "Depende solo del número de métodos"], answer: "Interfaz para capacidad; abstracta para identidad y código común", explanation: "La decisión depende de la relación y de si necesitas compartir estado/comportamiento, no de una regla absoluta." },
+];
+
+function InterviewGame() {
+  const [index, setIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [correct, setCorrect] = useState(0);
+  const [notice, setNotice] = useState("");
+  const challenge = interviewChallenges[index];
+  const next = () => {
+    if (!selected) return;
+    const result = correct + (selected === challenge.answer ? 1 : 0);
+    if (index < interviewChallenges.length - 1) { setCorrect(result); setIndex(value => value + 1); setSelected(null); return; }
+    setCorrect(result);
+    setNotice(result === interviewChallenges.length ? "¡Entrevista superada! Ya identificas varias trampas comunes de POO." : `Resultado: ${result}/${interviewChallenges.length}. Revisa las explicaciones y vuelve a intentarlo.`);
+  };
+  const reset = () => { setIndex(0); setSelected(null); setCorrect(0); setNotice(""); };
+
+  return <section className="interview-game"><div className="interview-banner"><span>⚡</span><div><p className="eyebrow">MODO ENTREVISTA</p><h2>Preguntas trampa</h2><p>La respuesta que parece obvia no siempre es la correcta. Lee el contexto, piensa en el diseño y explica tu decisión.</p></div></div><div className="game-panel"><div className="game-panel-head"><div><p className="eyebrow">CASO {index + 1} DE {interviewChallenges.length}</p><h3>Reto de entrevista</h3><p>Responde y luego revisa la explicación del entrevistador.</p></div><button className="game-reset" onClick={reset}>Reiniciar</button></div><div className="game-progress"><div style={{ width: `${((index + (selected ? 1 : 0)) / interviewChallenges.length) * 100}%` }} /></div><div className="game-challenge"><p className="game-prompt">{challenge.prompt}</p><pre>{challenge.code}</pre><div className="game-options">{challenge.options.map((option, optionIndex) => <button key={option} className={`game-option ${selected && option === challenge.answer ? "right" : ""} ${selected === option && option !== challenge.answer ? "wrong" : ""}`} onClick={() => setSelected(option)} disabled={Boolean(selected)}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}</button>)}</div>{selected && <div className={`game-feedback ${selected === challenge.answer ? "good" : "bad"}`}><strong>{selected === challenge.answer ? "¡Buena respuesta!" : "Esta era la trampa."}</strong><p>{challenge.explanation}</p></div>}</div>{selected && !notice && <button className="primary-cta game-next" onClick={next}>{index < interviewChallenges.length - 1 ? "Siguiente caso" : "Ver resultado"}<span>→</span></button>}{notice && <div className={`game-notice ${correct === interviewChallenges.length ? "mastered" : "retry"}`}><strong>{notice}</strong><button onClick={reset}>Intentarlo otra vez →</button></div>}</div></section>;
+}
+
 export function PooGames() {
   const [mastered, setMastered] = useState<PillarId[]>([]);
   const [activeId, setActiveId] = useState<PillarId>("encapsulamiento");
@@ -246,6 +277,8 @@ export function PooGames() {
       <div><p className="eyebrow">LABORATORIO DE POO</p><h2>Aprende jugando, <span>sin saltos.</span></h2><p>Domina los cuatro pilares con misiones cortas. Para avanzar necesitas acertar todos los retos del pilar.</p></div>
       <div className="games-score"><strong>{mastered.length}/4</strong><span>pilares dominados</span></div>
     </div>
+    <div className="poo-map"><div><b>Encapsulamiento</b><span>Protege los datos</span></div><i>→</i><div><b>Abstracción</b><span>Expone lo esencial</span></div><i>→</i><div><b>Herencia</b><span>Reutiliza una base</span></div><i>→</i><div><b>Polimorfismo</b><span>Una llamada, varias formas</span></div></div>
+    <div className="poo-reminder"><b>Cómo diferenciarlos:</b> encapsular es proteger el “dentro”; abstraer es simplificar el “afuera”; heredar es especializar una base; polimorfismo es usar el mismo contrato con comportamientos distintos.</div>
     <div className="pillar-track" aria-label="Progreso de los cuatro pilares">
       {pillars.map((pillar, pillarIndex) => <button key={pillar.id} className={`pillar-chip ${active.id === pillar.id ? "active" : ""} ${mastered.includes(pillar.id) ? "done" : ""} ${unlocked(pillar) ? "" : "locked"}`} onClick={() => choosePillar(pillar)} disabled={!unlocked(pillar)}><span className={`pillar-chip-icon ${pillar.color}`}>{mastered.includes(pillar.id) ? "✓" : pillar.icon}</span><span><b>{pillarIndex + 1}. {pillar.name}</b><small>{mastered.includes(pillar.id) ? "Dominado" : unlocked(pillar) ? pillar.short : pillar.unlock}</small></span></button>)}
     </div>
@@ -262,11 +295,11 @@ export function PooGames() {
 }
 
 export function GamesHub() {
-  const [module, setModule] = useState<"poo" | "contracts" | "future">("poo");
+  const [module, setModule] = useState<"poo" | "contracts" | "interview" | "future">("poo");
 
   return <section className="games-hub">
     <div className="games-hub-head"><div><p className="eyebrow">ARCADE DE APRENDIZAJE</p><h2>Juega para aprender, <span>aprende para recordar.</span></h2><p>Elige un módulo. Iremos agregando nuevos juegos y habilidades sin mezclar sus progresos.</p></div><div className="games-hub-badge">Módulos activos <b>1</b></div></div>
-    <nav className="game-modules" aria-label="Módulos de juegos"><button className={module === "poo" ? "active" : ""} onClick={() => setModule("poo")}><span className="module-game-icon">◈</span><span><b>POO</b><small>4 pilares · 40 preguntas</small></span><strong>→</strong></button><button className={module === "contracts" ? "active" : ""} onClick={() => setModule("contracts")}><span className="module-game-icon contracts">⌘</span><span><b>Interfaces y abstractas</b><small>10 preguntas · comparación</small></span><strong>→</strong></button><button className={module === "future" ? "active" : ""} onClick={() => setModule("future")}><span className="module-game-icon future">+</span><span><b>Próximamente</b><small>Nuevos juegos y retos</small></span><strong>→</strong></button></nav>
-    {module === "poo" ? <PooGames/> : module === "contracts" ? <ContractsGame/> : <div className="future-games"><div>✦</div><h3>Más módulos en camino</h3><p>Aquí agregaremos juegos de SOLID, LINQ, async/await y entrevistas .NET.</p><button className="primary-cta" onClick={() => setModule("poo")}>Volver a POO <span>→</span></button></div>}
+    <nav className="game-modules" aria-label="Módulos de juegos"><button className={module === "poo" ? "active" : ""} onClick={() => setModule("poo")}><span className="module-game-icon">◈</span><span><b>POO</b><small>4 pilares · 40 preguntas</small></span><strong>→</strong></button><button className={module === "contracts" ? "active" : ""} onClick={() => setModule("contracts")}><span className="module-game-icon contracts">⌘</span><span><b>Interfaces y abstractas</b><small>10 preguntas · comparación</small></span><strong>→</strong></button><button className={module === "interview" ? "active" : ""} onClick={() => setModule("interview")}><span className="module-game-icon interview">⚡</span><span><b>Entrevista POO</b><small>10 preguntas trampa</small></span><strong>→</strong></button><button className={module === "future" ? "active" : ""} onClick={() => setModule("future")}><span className="module-game-icon future">+</span><span><b>Próximamente</b><small>Nuevos juegos y retos</small></span><strong>→</strong></button></nav>
+    {module === "poo" ? <PooGames/> : module === "contracts" ? <ContractsGame/> : module === "interview" ? <InterviewGame/> : <div className="future-games"><div>✦</div><h3>Más módulos en camino</h3><p>Aquí agregaremos juegos de SOLID, LINQ, async/await y entrevistas .NET.</p><button className="primary-cta" onClick={() => setModule("poo")}>Volver a POO <span>→</span></button></div>}
   </section>;
 }
