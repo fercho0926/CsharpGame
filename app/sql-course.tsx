@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SqlQuestionBank } from "./sql-question-bank";
 
 const modules = [
   { id: "rdbms", number: "01", title: "¿Qué es un RDBMS?", duration: "12 min", active: true },
@@ -35,6 +36,8 @@ export function SqlCourse() {
         <div className="querying-columns"><div><b>Qué aprenderás</b><p>Conectar con una base de ejemplo, entender la estructura de una consulta y recuperar datos aplicando filtros.</p></div><div><b>Qué no cubriremos aquí</b><p>La creación de bases de datos ni la inserción, actualización o eliminación de información existente.</p></div><div><b>El ecosistema</b><p>SQL Server usa SSMS; Oracle usa SQL Developer; MySQL usa Workbench. Los conceptos se transfieren entre tecnologías.</p></div></div>
         <div className="querying-standards"><span>SQL ESTÁNDAR</span><p>SQL sigue estándares ANSI e ISO. Cada proveedor agrega su propio dialecto: <b>T‑SQL</b> es la implementación de Microsoft para SQL Server.</p></div>
       </section>
+
+      <SqlQuestionBank />
 
       <div className="sql-layout">
         <aside className="sql-modules" aria-label="Módulos del curso SQL">
