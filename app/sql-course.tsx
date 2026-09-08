@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SqlQuestionBank } from "./sql-question-bank";
+import { SqlQuestionBank, SqlFilterQuestionBank } from "./sql-question-bank";
 
 const modules = [
   { id: "rdbms", number: "01", title: "¿Qué es un RDBMS?", duration: "12 min", active: true },
@@ -38,6 +38,7 @@ export function SqlCourse() {
       </section>
 
       <SqlQuestionBank />
+      <SqlFilterQuestionBank />
 
       <div className="sql-layout">
         <aside className="sql-modules" aria-label="Módulos del curso SQL">
