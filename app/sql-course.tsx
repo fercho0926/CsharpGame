@@ -4,7 +4,7 @@ import { useState } from "react";
 
 const modules = [
   { id: "rdbms", number: "01", title: "¿Qué es un RDBMS?", duration: "12 min", active: true },
-  { id: "sql-server", number: "02", title: "SQL Server y sus herramientas", duration: "Próximamente", active: false },
+  { id: "sql-server", number: "02", title: "SQL Server y sus herramientas", duration: "15 min", active: true },
   { id: "tables", number: "03", title: "Tablas, filas y columnas", duration: "Próximamente", active: false },
   { id: "relationships", number: "04", title: "Relaciones e integridad de datos", duration: "Próximamente", active: false },
 ];
@@ -12,6 +12,7 @@ const modules = [
 const quizOptions = ["Un sistema que administra datos en una o varias tablas relacionadas", "Un lenguaje exclusivo para crear páginas web", "Un archivo de texto sin estructura", "Un programa que solo sirve para hacer reportes"];
 
 export function SqlCourse() {
+  const [selectedModule, setSelectedModule] = useState("rdbms");
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
 
@@ -28,9 +29,9 @@ export function SqlCourse() {
 
       <div className="sql-layout">
         <aside className="sql-modules" aria-label="Módulos del curso SQL">
-          <div className="sql-modules-heading"><span>CURSO · FUNDAMENTOS</span><b>1 de 4</b></div>
+          <div className="sql-modules-heading"><span>CURSO · FUNDAMENTOS</span><b>{selectedModule === "rdbms" ? "1" : "2"} de 4</b></div>
           {modules.map((module) => (
-            <button key={module.id} type="button" className={`sql-module ${module.active ? "current" : "locked"}`} disabled={!module.active}>
+            <button key={module.id} type="button" className={`sql-module ${module.id === selectedModule ? "current" : ""} ${module.active ? "" : "locked"}`} disabled={!module.active} onClick={() => { if (module.active) { setSelectedModule(module.id); setSelected(null); setChecked(false); } }}>
               <span className="sql-module-number">{module.number}</span>
               <span className="sql-module-copy"><b>{module.title}</b><small>{module.duration}</small></span>
               <span className="sql-module-mark">{module.active ? "→" : "·"}</span>
@@ -39,7 +40,7 @@ export function SqlCourse() {
           <div className="sql-note"><strong>Tu objetivo</strong><p>Entender por qué las bases relacionales son la base de tantos sistemas reales.</p></div>
         </aside>
 
-        <article className="sql-lesson">
+        {selectedModule === "rdbms" ? <article className="sql-lesson">
           <div className="sql-lesson-meta"><span>LECCIÓN 01</span><span>12 MIN · PRINCIPIANTE</span></div>
           <h3>¿Qué es un RDBMS?</h3>
           <p className="sql-lead">Un RDBMS —sistema de gestión de bases de datos relacionales— administra información organizada en una o varias tablas conectadas mediante relaciones.</p>
@@ -64,8 +65,27 @@ export function SqlCourse() {
           <div className="sql-use-cards"><div><span>OLTP</span><strong>Transaccional</strong><p>Operaciones del día a día: ventas, pedidos, nómina o inventario.</p></div><div><span>OLAP</span><strong>Analítico</strong><p>Reportes, inteligencia de negocio y análisis de grandes volúmenes.</p></div></div>
 
           <div className="sql-quiz"><p className="eyebrow">COMPRUEBA LO QUE ENTENDISTE</p><h4>¿Qué define mejor a un RDBMS?</h4><div className="sql-quiz-options">{quizOptions.map((option, index) => <button type="button" key={option} className={`${selected === index ? "selected" : ""} ${checked && index === 0 ? "correct" : ""} ${checked && selected === index && index !== 0 ? "wrong" : ""}`} onClick={() => !checked && setSelected(index)}><span>{String.fromCharCode(65 + index)}</span>{option}</button>)}</div>{checked && <p className={`sql-quiz-feedback ${selected === 0 ? "ok" : "retry"}`}>{selected === 0 ? "¡Correcto! Las relaciones y la estructura son la esencia de un RDBMS." : "Casi. Recuerda: administra datos estructurados en tablas conectadas por relaciones."}</p>}<button type="button" className="primary-cta" disabled={selected === null} onClick={() => setChecked(true)}>{checked ? "Respuesta revisada" : "Comprobar respuesta"}<span>→</span></button></div>
-        </article>
+        </article> : <SqlToolsLesson />}
       </div>
     </section>
   );
+}
+
+function SqlToolsLesson() {
+  const [selected, setSelected] = useState<number | null>(null);
+  const [checked, setChecked] = useState(false);
+  const options = ["SSMS", "Azure Data Studio", "sqlcmd", "Excel"];
+  return <article className="sql-lesson">
+    <div className="sql-lesson-meta"><span>LECCIÓN 02</span><span>15 MIN · PRINCIPIANTE</span></div>
+    <h3>Herramientas cliente de SQL Server</h3>
+    <p className="sql-lead">Hay muchas formas de conectarse a SQL Server. En esta lección nos enfocaremos en SSMS, Azure Data Studio y <code>sqlcmd</code>: tres herramientas gratuitas mantenidas por Microsoft.</p>
+    <div className="sql-callout"><span className="sql-callout-icon">⌘</span><div><strong>¿Qué tienen en común?</strong><p>Las tres se pueden instalar manualmente o con un administrador de paquetes y sirven para trabajar con SQL Server.</p></div></div>
+    <h4>La diferencia principal</h4>
+    <div className="sql-tools-table"><div className="sql-tools-row sql-tools-head"><b>Herramienta</b><b>Tipo</b><b>Sistema</b><b>Ideal para</b></div><div className="sql-tools-row"><strong>SSMS</strong><span>Gráfica</span><span>Solo Windows</span><span>Administradores</span></div><div className="sql-tools-row"><strong>Azure Data Studio</strong><span>Gráfica</span><span>Windows, Linux y macOS</span><span>Desarrolladores</span></div><div className="sql-tools-row"><strong><code>sqlcmd</code></strong><span>Línea de comandos</span><span>Windows, Linux y macOS</span><span>Automatización y scripts</span></div></div>
+    <h4>¿Qué herramienta elegir?</h4>
+    <p>En muchos casos puedes usar las tres. <b>SSMS</b> ofrece funciones avanzadas para administración, replicación y alta disponibilidad. <b>Azure Data Studio</b> incluye cuadernos y extensiones, útiles para explorar y desarrollar. <b>sqlcmd</b> es perfecto para automatizar tareas desde un script o una terminal.</p>
+    <div className="sql-facts sql-tools-facts"><div><b>SSMS</b><span>Administración profunda y configuración del servidor.</span></div><div><b>ADS</b><span>Desarrollo, consultas exploratorias, notebooks y extensiones.</span></div><div><b>SQLCMD</b><span>Procesos repetibles, automatización y DevOps.</span></div></div>
+    <div className="sql-callout sql-callout-soft"><span className="sql-callout-icon">↗</span><div><strong>¿Y los usuarios finales?</strong><p>No deberían tener que escribir consultas. Acceden a los datos a través de aplicaciones como Excel, un ERP o un CRM.</p></div></div>
+    <div className="sql-quiz"><p className="eyebrow">COMPRUEBA LO QUE ENTENDISTE</p><h4>¿Qué herramienta es especialmente adecuada para automatización y scripts?</h4><div className="sql-quiz-options">{options.map((option, index) => <button type="button" key={option} className={`${selected === index ? "selected" : ""} ${checked && index === 2 ? "correct" : ""} ${checked && selected === index && index !== 2 ? "wrong" : ""}`} onClick={() => !checked && setSelected(index)}><span>{String.fromCharCode(65 + index)}</span>{option}</button>)}</div>{checked && <p className={`sql-quiz-feedback ${selected === 2 ? "ok" : "retry"}`}>{selected === 2 ? "¡Correcto! sqlcmd funciona desde la línea de comandos y encaja muy bien en automatizaciones." : "Recuerda: sqlcmd es la herramienta de línea de comandos pensada para automatización y scripts."}</p>}<button type="button" className="primary-cta" disabled={selected === null} onClick={() => setChecked(true)}>{checked ? "Respuesta revisada" : "Comprobar respuesta"}<span>→</span></button></div>
+  </article>;
 }
