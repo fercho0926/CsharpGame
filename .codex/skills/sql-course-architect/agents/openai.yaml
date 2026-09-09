@@ -1,0 +1,4 @@
+interface:
+  display_name: SQL Course Architect
+  short_description: Organiza cursos SQL paso a paso
+  default_prompt: Reorganiza este curso SQL con una progresión didáctica clara y práctica incremental.
