@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { SqlQuestionBank, SqlFilterQuestionBank } from "./sql-question-bank";
 import { SqlPlayground } from "./sql-playground";
 import { SqlOrderGame } from "./sql-order-game";
+import { SqlVisualLab } from "./sql-visual-lab";
 import { defaultSqlProgress, readSqlProgress, writeSqlProgress, type SqlProgress } from "./sql-progress";
 
 const modules = [
@@ -49,6 +50,7 @@ export function SqlCourse() {
       <SqlFilterQuestionBank progress={sqlProgress} onProgress={updateProgress} />
       <SqlPlayground />
       <SqlOrderGame />
+      <SqlVisualLab />
 
       <div className="sql-layout">
         <aside className="sql-modules" aria-label="Módulos del curso SQL">
