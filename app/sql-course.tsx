@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { SqlQuestionBank, SqlFilterQuestionBank } from "./sql-question-bank";
 import { SqlPlayground } from "./sql-playground";
+import { SqlOrderGame } from "./sql-order-game";
 import { defaultSqlProgress, readSqlProgress, writeSqlProgress, type SqlProgress } from "./sql-progress";
 
 const modules = [
@@ -47,6 +48,7 @@ export function SqlCourse() {
       <div className="sql-save-status">✓ Progreso SQL guardado automáticamente · {sqlProgress.selectCorrect + sqlProgress.filterCorrect} aciertos</div><SqlQuestionBank progress={sqlProgress} onProgress={updateProgress} />
       <SqlFilterQuestionBank progress={sqlProgress} onProgress={updateProgress} />
       <SqlPlayground />
+      <SqlOrderGame />
 
       <div className="sql-layout">
         <aside className="sql-modules" aria-label="Módulos del curso SQL">
