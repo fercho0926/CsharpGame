@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SqlQuestionBank, SqlFilterQuestionBank } from "./sql-question-bank";
+import { defaultSqlProgress, readSqlProgress, writeSqlProgress, type SqlProgress } from "./sql-progress";
 
 const modules = [
   { id: "rdbms", number: "01", title: "¿Qué es un RDBMS?", duration: "12 min", active: true },
@@ -9,13 +10,17 @@ const modules = [
   { id: "tsql-dml", number: "03", title: "¿Qué es T-SQL? — DML", duration: "20 min", active: true },
   { id: "schemas-ddl", number: "04", title: "T-SQL: esquemas, DDL y tipos", duration: "20 min", active: true },
   { id: "sql-terminology", number: "05", title: "Terminología SQL", duration: "20 min", active: true },
-  { id: "relationships", number: "06", title: "Relaciones e integridad de datos", duration: "Próximamente", active: false },
+  { id: "aggregates", number: "06", title: "Funciones agregadas", duration: "20 min", active: true },
+  { id: "relationships", number: "07", title: "Relaciones e integridad de datos", duration: "Próximamente", active: false },
 ];
 
 const quizOptions = ["Un sistema que administra datos en una o varias tablas relacionadas", "Un lenguaje exclusivo para crear páginas web", "Un archivo de texto sin estructura", "Un programa que solo sirve para hacer reportes"];
 
 export function SqlCourse() {
   const [selectedModule, setSelectedModule] = useState("rdbms");
+  const [sqlProgress, setSqlProgress] = useState<SqlProgress>(defaultSqlProgress);
+  useEffect(() => { const saved = readSqlProgress(); setSelectedModule(saved.module); setSqlProgress(saved); }, []);
+  const updateProgress = (changes: Partial<SqlProgress>) => setSqlProgress((current) => { const next = { ...current, ...changes }; writeSqlProgress(next); return next; });
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
 
@@ -37,12 +42,12 @@ export function SqlCourse() {
         <div className="querying-standards"><span>SQL ESTÁNDAR</span><p>SQL sigue estándares ANSI e ISO. Cada proveedor agrega su propio dialecto: <b>T‑SQL</b> es la implementación de Microsoft para SQL Server.</p></div>
       </section>
 
-      <SqlQuestionBank />
-      <SqlFilterQuestionBank />
+      <div className="sql-save-status">✓ Progreso SQL guardado automáticamente · {sqlProgress.selectCorrect + sqlProgress.filterCorrect} aciertos</div><SqlQuestionBank progress={sqlProgress} onProgress={updateProgress} />
+      <SqlFilterQuestionBank progress={sqlProgress} onProgress={updateProgress} />
 
       <div className="sql-layout">
         <aside className="sql-modules" aria-label="Módulos del curso SQL">
-          <div className="sql-modules-heading"><span>CURSO · FUNDAMENTOS</span><b>{selectedModule === "rdbms" ? "1" : selectedModule === "sql-server" ? "2" : selectedModule === "tsql-dml" ? "3" : selectedModule === "schemas-ddl" ? "4" : "5"} de 6</b></div>
+          <div className="sql-modules-heading"><span>CURSO · FUNDAMENTOS</span><b>{selectedModule === "rdbms" ? "1" : selectedModule === "sql-server" ? "2" : selectedModule === "tsql-dml" ? "3" : selectedModule === "schemas-ddl" ? "4" : selectedModule === "sql-terminology" ? "5" : "6"} de 7</b></div>
           {modules.map((module) => (
             <button key={module.id} type="button" className={`sql-module ${module.id === selectedModule ? "current" : ""} ${module.active ? "" : "locked"}`} disabled={!module.active} onClick={() => { if (module.active) { setSelectedModule(module.id); setSelected(null); setChecked(false); } }}>
               <span className="sql-module-number">{module.number}</span>
@@ -78,7 +83,7 @@ export function SqlCourse() {
           <div className="sql-use-cards"><div><span>OLTP</span><strong>Transaccional</strong><p>Operaciones del día a día: ventas, pedidos, nómina o inventario.</p></div><div><span>OLAP</span><strong>Analítico</strong><p>Reportes, inteligencia de negocio y análisis de grandes volúmenes.</p></div></div>
 
           <div className="sql-quiz"><p className="eyebrow">COMPRUEBA LO QUE ENTENDISTE</p><h4>¿Qué define mejor a un RDBMS?</h4><div className="sql-quiz-options">{quizOptions.map((option, index) => <button type="button" key={option} className={`${selected === index ? "selected" : ""} ${checked && index === 0 ? "correct" : ""} ${checked && selected === index && index !== 0 ? "wrong" : ""}`} onClick={() => !checked && setSelected(index)}><span>{String.fromCharCode(65 + index)}</span>{option}</button>)}</div>{checked && <p className={`sql-quiz-feedback ${selected === 0 ? "ok" : "retry"}`}>{selected === 0 ? "¡Correcto! Las relaciones y la estructura son la esencia de un RDBMS." : "Casi. Recuerda: administra datos estructurados en tablas conectadas por relaciones."}</p>}<button type="button" className="primary-cta" disabled={selected === null} onClick={() => setChecked(true)}>{checked ? "Respuesta revisada" : "Comprobar respuesta"}<span>→</span></button></div>
-        </article> : selectedModule === "sql-server" ? <SqlToolsLesson /> : selectedModule === "tsql-dml" ? <TsqlDmlLesson /> : selectedModule === "schemas-ddl" ? <SchemasDdlLesson /> : <SqlTerminologyLesson />}
+        </article> : selectedModule === "sql-server" ? <SqlToolsLesson /> : selectedModule === "tsql-dml" ? <TsqlDmlLesson /> : selectedModule === "schemas-ddl" ? <SchemasDdlLesson /> : selectedModule === "sql-terminology" ? <SqlTerminologyLesson /> : <AggregateLesson />}
       </div>
     </section>
   );
@@ -122,4 +127,11 @@ function SqlTerminologyLesson() {
   const [checked, setChecked] = useState(false);
   const options = ["SELECT", "FROM", "WHERE", "ORDER BY"];
   return <article className="sql-lesson"><div className="sql-lesson-meta"><span>LECCIÓN 05</span><span>20 MIN · PRINCIPIANTE</span></div><h3>Terminología SQL</h3><p className="sql-lead">Entender cómo SQL procesa las consultas es esencial para escribirlas mejor y manejar errores. Las instrucciones SQL se agrupan en DDL, DML y DCL.</p><div className="sql-join-cards sql-language-cards"><div><b>DDL</b><span>Define objetos: <code>CREATE</code>, <code>ALTER</code>, <code>DROP</code>.</span></div><div><b>DML</b><span>Consulta y modifica datos: <code>SELECT</code>, <code>INSERT</code>, <code>DELETE</code>, <code>MERGE</code>.</span></div><div><b>DCL</b><span>Controla permisos: <code>GRANT</code> y <code>REVOKE</code>.</span></div></div><h4>Sentencia, consulta y cláusula</h4><p>Una <b>sentencia</b> es un conjunto de instrucciones compiladas. Una <b>consulta</b> es un tipo especial de sentencia que recupera datos. Una consulta puede contener varias <b>cláusulas</b>, y cada una aplica una operación distinta.</p><pre className="sql-code-block"><code>{"SELECT ORDER_DATE, COUNT(*) AS TotalOrders\nFROM ORDERS\nWHERE SalesTerritory = 'USA'\nGROUP BY ORDER_DATE\nHAVING COUNT(*) > 1\nORDER BY ORDER_DATE DESC;"}</code></pre><h4>Orden de escritura vs. orden lógico</h4><p>Escribimos una consulta empezando por <code>SELECT</code>, pero SQL la procesa lógicamente en otro orden:</p><div className="sql-order-flow"><span>FROM</span><i>→</i><span>WHERE</span><i>→</i><span>GROUP BY</span><i>→</i><span>HAVING</span><i>→</i><span>SELECT</span><i>→</i><span>ORDER BY</span></div><div className="sql-callout"><span className="sql-callout-icon">◎</span><div><strong>¿Por qué importa?</strong><p>Cada cláusula solo puede usar información que ya fue procesada. <code>WHERE</code> filtra filas; <code>HAVING</code> filtra grupos. Por eso no son intercambiables.</p></div></div><h4>Detalles que evitan sorpresas</h4><div className="sql-facts"><div><b>Nombres</b><span>Un objeto puede escribirse como servidor.base_de_datos.esquema.objeto.</span></div><div><b>NULL</b><span>La lógica de SQL tiene tres resultados: verdadero, falso o desconocido.</span></div><div><b>ORDEN</b><span>Sin <code>ORDER BY</code>, SQL Server puede devolver filas en cualquier orden.</span></div></div><p className="sql-lead sql-tip">SQL es declarativo: describes qué resultado quieres, no los pasos exactos para obtenerlo. Es buena práctica mantener un formato consistente y terminar las sentencias con punto y coma.</p><div className="sql-quiz"><p className="eyebrow">COMPRUEBA LO QUE ENTENDISTE</p><h4>¿Cuál es la única cláusula obligatoria de una consulta?</h4><div className="sql-quiz-options">{options.map((option, index) => <button type="button" key={option} className={`${selected === index ? "selected" : ""} ${checked && index === 0 ? "correct" : ""} ${checked && selected === index && index !== 0 ? "wrong" : ""}`} onClick={() => !checked && setSelected(index)}><span>{String.fromCharCode(65 + index)}</span>{option}</button>)}</div>{checked && <p className={`sql-quiz-feedback ${selected === 0 ? "ok" : "retry"}`}>{selected === 0 ? "¡Correcto! SELECT indica qué datos quieres devolver." : "La respuesta es SELECT. Las demás cláusulas son opcionales y refinan el resultado."}</p>}<button type="button" className="primary-cta" disabled={selected === null} onClick={() => setChecked(true)}>{checked ? "Respuesta revisada" : "Comprobar respuesta"}<span>→</span></button></div></article>;
+}
+
+function AggregateLesson() {
+  const [selected, setSelected] = useState<number | null>(null);
+  const [checked, setChecked] = useState(false);
+  const options = ["COUNT(*)", "COUNT(Stock)", "AVG(Stock)", "SUM(DISTINCT Stock)"];
+  return <article className="sql-lesson"><div className="sql-lesson-meta"><span>LECCIÓN 06</span><span>20 MIN · PRINCIPIANTE</span></div><h3>Funciones agregadas</h3><p className="sql-lead">Las funciones agregadas resumen un conjunto de filas en un solo valor. Sirven para descubrir patrones, valores atípicos y errores en los datos.</p><div className="sql-use-cards"><div><span>COUNT</span><strong>Contar filas</strong><p><code>COUNT(*)</code> cuenta todas las filas; <code>COUNT(columna)</code> ignora los valores <code>NULL</code>.</p></div><div><span>SUM · AVG</span><strong>Calcular totales</strong><p>Suman o calculan el promedio de los valores conocidos.</p></div></div><h4>NULL cambia el resultado</h4><p>Con cinco productos, <code>COUNT(*)</code> devuelve 5. Si una columna Stock contiene un <code>NULL</code>, <code>COUNT(Stock)</code> devuelve 4. Las funciones agregadas, excepto <code>COUNT(*)</code>, ignoran los valores nulos.</p><pre className="sql-code-block"><code>{"SELECT COUNT(*) AS TotalRows,\n       COUNT(Stock) AS KnownStock,\n       AVG(Stock) AS AverageStock,\n       MIN(Stock) AS MinimumStock,\n       MAX(Stock) AS MaximumStock\nFROM Products;"}</code></pre><h4>DISTINCT dentro de una función</h4><p><code>COUNT(DISTINCT Stock)</code> cuenta valores conocidos sin repetir. Con 10, 20, 20 y 30 devuelve 3. También puedes usar <code>SUM(DISTINCT Stock)</code> para sumar cada valor una sola vez.</p><div className="sql-facts"><div><b>MIN / MAX</b><span>En números, menor y mayor. En fechas, fecha más antigua y más reciente.</span></div><div><b>NULL</b><span>Puede cambiar especialmente los promedios; no equivale a cero.</span></div><div><b>ESCALAR</b><span>Opera fila por fila: UPPER, YEAR y MONTH devuelven un valor por fila.</span></div></div><h4>Agrupar, filtrar y ordenar</h4><p><code>GROUP BY</code> crea grupos para resumirlos. <code>HAVING</code> filtra grupos después de agregar; <code>WHERE</code> filtra filas antes. Puedes usar funciones agregadas en <code>SELECT</code>, <code>ORDER BY</code> y <code>HAVING</code>.</p><pre className="sql-code-block"><code>{"SELECT Color, COUNT(*) AS Products\nFROM Products\nGROUP BY Color\nHAVING COUNT(*) > 5\nORDER BY Products DESC;"}</code></pre><div className="sql-quiz"><p className="eyebrow">COMPRUEBA LO QUE ENTENDISTE</p><h4>¿Cuál cuenta todas las filas, incluso si Stock contiene NULL?</h4><div className="sql-quiz-options">{options.map((option, index) => <button type="button" key={option} className={`${selected === index ? "selected" : ""} ${checked && index === 0 ? "correct" : ""} ${checked && selected === index && index !== 0 ? "wrong" : ""}`} onClick={() => !checked && setSelected(index)}><span>{String.fromCharCode(65 + index)}</span>{option}</button>)}</div>{checked && <p className={`sql-quiz-feedback ${selected === 0 ? "ok" : "retry"}`}>{selected === 0 ? "¡Correcto! COUNT(*) cuenta todas las filas, sin mirar si una columna específica es NULL." : "La respuesta es COUNT(*). COUNT(Stock) ignora los NULL y las otras opciones realizan cálculos distintos."}</p>}<button type="button" className="primary-cta" disabled={selected === null} onClick={() => setChecked(true)}>{checked ? "Respuesta revisada" : "Comprobar respuesta"}<span>→</span></button></div></article>;
 }

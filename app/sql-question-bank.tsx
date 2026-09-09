@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type SqlQuestion = { prompt: string; code: string; options: string[]; answer: number; explanation: string; interview: string };
 
@@ -30,23 +30,28 @@ const filterQuestions: SqlQuestion[] = [
   { prompt: "¿Qué práctica evita resultados inesperados?", code: "WHERE Name LIKE 'Sam%'\nAND (Income BETWEEN 50000 AND 99999);", options: ["Usar paréntesis y condiciones claras", "Eliminar WHERE", "Usar siempre *", "Duplicar la tabla"], answer: 0, explanation: "Agrupar la lógica hace explícita la intención del filtro.", interview: "¿Cómo probarías una condición compleja?" },
 ];
 
-export function SqlQuestionBank() {
+export function SqlQuestionBank({ progress, onProgress }: { progress: { selectIndex: number; selectAnswered: number; selectCorrect: number }; onProgress: (changes: { selectIndex?: number; selectAnswered?: number; selectCorrect?: number }) => void }) {
   const [mode, setMode] = useState<"practice" | "interview">("practice");
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(progress.selectIndex);
   const [selected, setSelected] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
-  const questions = activeTopic === "select" ? selectQuestions : filterQuestions;
+  const questions = selectQuestions;
   const question = questions[index];
-  const next = () => { setIndex((value) => (value + 1) % questions.length); setSelected(null); setAnswered(false); };
-  const changeTopic = (topic: "select" | "filter") => { setActiveTopic(topic); setIndex(0); setSelected(null); setAnswered(false); };
+  useEffect(() => { setIndex(progress.selectIndex); }, [progress.selectIndex]);
+  useEffect(() => { if (answered) onProgress({ selectAnswered: progress.selectAnswered + 1, selectCorrect: progress.selectCorrect + (selected === question.answer ? 1 : 0) }); }, [answered]);
+  const next = () => { const nextIndex = (index + 1) % questions.length; setIndex(nextIndex); onProgress({ selectIndex: nextIndex }); setSelected(null); setAnswered(false); };
+  const checkAnswer = () => { setAnswered(true); onProgress({ selectAnswered: progress.selectAnswered + 1, selectCorrect: progress.selectCorrect + (selected === question.answer ? 1 : 0) }); };
   return <section className="sql-question-bank"><div className="sql-bank-heading"><div><p className="eyebrow">PRÁCTICA POR TEMA · SELECT</p><h3>10 preguntas para dominar SELECT</h3><p>Basadas en el demo de seleccionar datos de AdventureWorks.</p></div><span className="sql-bank-count">{index + 1} / 10</span></div><div className="sql-mode-toggle"><button type="button" className={mode === "practice" ? "active" : ""} onClick={() => { setMode("practice"); setSelected(null); setAnswered(false); }}>Práctica guiada</button><button type="button" className={mode === "interview" ? "active" : ""} onClick={() => { setMode("interview"); setSelected(null); setAnswered(false); }}>Modo entrevista</button></div>{mode === "interview" && <div className="sql-interview-prompt"><b>Pregunta de entrevista</b><span>{question.interview}</span></div>}<div className="sql-bank-card"><p className="sql-bank-question">{question.prompt}</p><pre className="sql-code-block"><code>{question.code}</code></pre><div className="sql-quiz-options">{question.options.map((option, optionIndex) => <button type="button" key={option} className={`${selected === optionIndex ? "selected" : ""} ${answered && optionIndex === question.answer ? "correct" : ""} ${answered && selected === optionIndex && optionIndex !== question.answer ? "wrong" : ""}`} onClick={() => !answered && setSelected(optionIndex)}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}</button>)}</div>{answered && <p className={`sql-quiz-feedback ${selected === question.answer ? "ok" : "retry"}`}>{selected === question.answer ? `¡Correcto! ${question.explanation}` : `Repasemos: ${question.explanation}`}</p>}<div className="sql-bank-actions">{!answered ? <button type="button" className="primary-cta" disabled={selected === null} onClick={() => setAnswered(true)}>Comprobar respuesta <span>→</span></button> : <button type="button" className="primary-cta" onClick={next}>{index === selectQuestions.length - 1 ? "Reiniciar tema" : "Siguiente pregunta"} <span>→</span></button>}</div></div></section>;
 }
 
-export function SqlFilterQuestionBank() {
-  const [index, setIndex] = useState(0);
+export function SqlFilterQuestionBank({ progress, onProgress }: { progress: { filterIndex: number; filterAnswered: number; filterCorrect: number }; onProgress: (changes: { filterIndex?: number; filterAnswered?: number; filterCorrect?: number }) => void }) {
+  const [index, setIndex] = useState(progress.filterIndex);
   const [selected, setSelected] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
   const question = filterQuestions[index];
-  const next = () => { setIndex((value) => (value + 1) % filterQuestions.length); setSelected(null); setAnswered(false); };
+  useEffect(() => { setIndex(progress.filterIndex); }, [progress.filterIndex]);
+  useEffect(() => { if (answered) onProgress({ filterAnswered: progress.filterAnswered + 1, filterCorrect: progress.filterCorrect + (selected === question.answer ? 1 : 0) }); }, [answered]);
+  const next = () => { const nextIndex = (index + 1) % filterQuestions.length; setIndex(nextIndex); onProgress({ filterIndex: nextIndex }); setSelected(null); setAnswered(false); };
+  const checkAnswer = () => { setAnswered(true); onProgress({ filterAnswered: progress.filterAnswered + 1, filterCorrect: progress.filterCorrect + (selected === question.answer ? 1 : 0) }); };
   return <section className="sql-question-bank sql-filter-bank"><div className="sql-bank-heading"><div><p className="eyebrow">PRÁCTICA POR TEMA · WHERE</p><h3>10 preguntas para dominar el filtrado</h3><p>Basadas en el demo de Filtering Data con AdventureWorks.</p></div><span className="sql-bank-count">{index + 1} / 10</span></div><div className="sql-mode-toggle"><span className="sql-filter-label">Modo entrevista incluido en cada pregunta</span></div><div className="sql-bank-card"><p className="sql-bank-question">{question.prompt}</p><pre className="sql-code-block"><code>{question.code}</code></pre><div className="sql-quiz-options">{question.options.map((option, optionIndex) => <button type="button" key={option} className={`${selected === optionIndex ? "selected" : ""} ${answered && optionIndex === question.answer ? "correct" : ""} ${answered && selected === optionIndex && optionIndex !== question.answer ? "wrong" : ""}`} onClick={() => !answered && setSelected(optionIndex)}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}</button>)}</div>{answered && <div className="sql-interview-prompt"><b>Entrevista:</b><span>{question.interview}</span></div>}<div className="sql-bank-actions">{!answered ? <button type="button" className="primary-cta" disabled={selected === null} onClick={() => setAnswered(true)}>Comprobar respuesta <span>→</span></button> : <button type="button" className="primary-cta" onClick={next}>{index === filterQuestions.length - 1 ? "Reiniciar tema" : "Siguiente pregunta"} <span>→</span></button>}</div></div></section>;
 }
