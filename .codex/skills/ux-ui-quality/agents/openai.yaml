@@ -1,0 +1,4 @@
+interface:
+  display_name: UX/UI Quality
+  short_description: Revisión UX/UI para cada sección de C# Quest
+  default_prompt: Revisa y mejora la UX/UI de esta sección de C# Quest antes de publicarla.
