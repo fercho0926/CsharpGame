@@ -21,11 +21,11 @@ const modules = [
 
 const quizOptions = ["Un sistema que administra datos en una o varias tablas relacionadas", "Un lenguaje exclusivo para crear páginas web", "Un archivo de texto sin estructura", "Un programa que solo sirve para hacer reportes"];
 
-export function SqlCourse() {
+export function SqlCourse({ progress: externalProgress, onProgress: externalOnProgress }: { progress?: SqlProgress; onProgress?: (changes: Partial<SqlProgress>) => void } = {}) {
   const [selectedModule, setSelectedModule] = useState("rdbms");
-  const [sqlProgress, setSqlProgress] = useState<SqlProgress>(defaultSqlProgress);
-  useEffect(() => { const saved = readSqlProgress(); setSelectedModule(saved.module); setSqlProgress(saved); }, []);
-  const updateProgress = (changes: Partial<SqlProgress>) => setSqlProgress((current) => { const next = { ...current, ...changes }; writeSqlProgress(next); return next; });
+  const [sqlProgress, setSqlProgress] = useState<SqlProgress>(externalProgress || defaultSqlProgress);
+  useEffect(() => { const saved = externalProgress || readSqlProgress(); setSelectedModule(saved.module); setSqlProgress(saved); }, [externalProgress]);
+  const updateProgress = (changes: Partial<SqlProgress>) => setSqlProgress((current) => { const next = { ...current, ...changes }; if (externalOnProgress) externalOnProgress(changes); else writeSqlProgress(next); return next; });
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
 

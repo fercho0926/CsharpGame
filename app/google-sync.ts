@@ -1,4 +1,4 @@
-export type ProgressState={version:number;xp:number;streak:number;completed:number;correct:number;topic:string;planIds:string[];planIndex:number;mastered:Record<string,string[]>;moduleDone:boolean;completedSteps:string[];updatedAt:string};
+export type ProgressState={version:number;xp:number;streak:number;completed:number;correct:number;topic:string;planIds:string[];planIndex:number;mastered:Record<string,string[]>;moduleDone:boolean;completedSteps:string[];sqlProgress?:Record<string,unknown>;updatedAt:string};
 export type SyncEvent={type:string;module?:string;step?:string;topic?:string;question?:string;answer?:string;correct?:boolean;xp?:number;progress?:ProgressState};
 export async function sendToGoogleSheets(endpoint:string,event:SyncEvent){
  if(!endpoint.trim()) return false;
