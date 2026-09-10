@@ -16,11 +16,12 @@ const topics = [
   ["08", "Entidad–Relación", "Entidades, claves, atributos y cardinalidad."],
   ["09", "JOIN", "Combinar información de varias tablas."],
   ["10", "Subconsultas", "IN, EXISTS y consultas correlacionadas."],
-  ["11", "UNION", "Combinar conjuntos y controlar duplicados."],
-  ["12", "CASE y NULL", "Clasificar, convertir y tratar valores faltantes."],
-  ["13", "Restricciones", "Claves, CHECK, DEFAULT y datos confiables."],
-  ["14", "Vistas e índices", "Reutilización, rendimiento y seguridad."],
-  ["15", "Proyecto final", "Un informe de ventas de principio a fin."],
+  ["11", "CTE", "Separar consultas complejas en pasos legibles."],
+  ["12", "UNION", "Combinar conjuntos y controlar duplicados."],
+  ["13", "CASE y NULL", "Clasificar, convertir y tratar valores faltantes."],
+  ["14", "Restricciones", "Claves, CHECK, DEFAULT y datos confiables."],
+  ["15", "Vistas e índices", "Reutilización, rendimiento y seguridad."],
+  ["16", "Proyecto final", "Un informe de ventas de principio a fin."],
 ];
 
 export function SqlTopicsView() {

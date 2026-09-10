@@ -19,11 +19,12 @@ const modules = [
   { id: "er-model", number: "08", title: "Modelo Entidad–Relación", duration: "20 min", active: true },
   { id: "relationships", number: "09", title: "Unir datos con JOIN", duration: "20 min", active: true },
   { id: "subqueries", number: "10", title: "Subconsultas y EXISTS", duration: "25 min", active: true },
-  { id: "set-ops", number: "11", title: "UNION y conjuntos", duration: "20 min", active: true },
-  { id: "expressions", number: "12", title: "CASE, NULL y conversiones", duration: "25 min", active: true },
-  { id: "constraints", number: "13", title: "Tablas y restricciones", duration: "25 min", active: true },
-  { id: "views-indexes", number: "14", title: "Vistas, índices y seguridad", duration: "25 min", active: true },
-  { id: "capstone", number: "15", title: "Proyecto final: informe de ventas", duration: "30 min", active: true },
+  { id: "ctes", number: "11", title: "CTE: consultas legibles", duration: "25 min", active: true },
+  { id: "set-ops", number: "12", title: "UNION y conjuntos", duration: "20 min", active: true },
+  { id: "expressions", number: "13", title: "CASE, NULL y conversiones", duration: "25 min", active: true },
+  { id: "constraints", number: "14", title: "Tablas y restricciones", duration: "25 min", active: true },
+  { id: "views-indexes", number: "15", title: "Vistas, índices y seguridad", duration: "25 min", active: true },
+  { id: "capstone", number: "16", title: "Proyecto final: informe de ventas", duration: "30 min", active: true },
 ];
 
 const quizOptions = ["Un sistema que administra datos en una o varias tablas relacionadas", "Un lenguaje exclusivo para crear páginas web", "Un archivo de texto sin estructura", "Un programa que solo sirve para hacer reportes"];

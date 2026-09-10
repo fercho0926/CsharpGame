@@ -15,6 +15,12 @@ type Lesson = {
 };
 
 const lessons: Record<string, Lesson> = {
+  ctes: {
+    number: "11", title: "CTE: consultas legibles", summary: "Divide una consulta compleja en pasos con WITH para que sea más fácil de leer, probar y mantener.",
+    ideas: [["WITH", "Declara una expresión de tabla común antes del SELECT."], ["Nombre", "Una CTE tiene un nombre y columnas que puedes consultar."], ["Reutilización", "Puedes referenciarla dentro de la consulta que la sigue."], ["Recursiva", "También puede recorrer jerarquías con UNION ALL."]],
+    example: "WITH ventas_por_categoria AS (\n  SELECT Category, SUM(Price) AS Revenue\n  FROM Products\n  GROUP BY Category\n)\nSELECT Category, Revenue\nFROM ventas_por_categoria\nWHERE Revenue > 1000;",
+    challenge: "¿Qué palabra inicia una expresión de tabla común?", options: ["WITH", "VIEW", "TEMP", "DECLARE"], answer: 0, feedback: "WITH inicia una CTE. La consulta que la sigue puede tratarla como una tabla temporal lógica."
+  },
   subqueries: {
     number: "10", title: "Subconsultas y EXISTS", summary: "Aprende a usar una consulta dentro de otra para comparar, filtrar y responder preguntas de negocio.",
     ideas: [["Subconsulta escalar", "Devuelve un valor, por ejemplo el precio promedio."], ["IN", "Compara una columna contra los resultados de otra consulta."], ["EXISTS", "Comprueba si existe al menos una fila relacionada."], ["Correlacionada", "Se evalúa tomando datos de la fila externa."]],
