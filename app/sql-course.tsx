@@ -28,6 +28,7 @@ export function SqlCourse({ progress: externalProgress, onProgress: externalOnPr
   const updateProgress = (changes: Partial<SqlProgress>) => setSqlProgress((current) => { const next = { ...current, ...changes }; if (externalOnProgress) externalOnProgress(changes); else writeSqlProgress(next); return next; });
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+  const moduleGroups = [{ title: "01 · Fundamentos", modules: modules.slice(0, 2) }, { title: "02 · Consultas y T-SQL", modules: modules.slice(2, 7) }, { title: "03 · Diseño y relaciones", modules: modules.slice(7) }];
 
   return (
     <section className="sql-course">
@@ -56,13 +57,13 @@ export function SqlCourse({ progress: externalProgress, onProgress: externalOnPr
       <div className="sql-layout">
         <aside className="sql-modules" aria-label="Módulos del curso SQL">
           <div className="sql-modules-heading"><span>CURSO · FUNDAMENTOS</span><b>{selectedModule === "rdbms" ? "1" : selectedModule === "sql-server" ? "2" : selectedModule === "tsql-dml" ? "3" : selectedModule === "schemas-ddl" ? "4" : selectedModule === "sql-terminology" ? "5" : selectedModule === "aggregates" ? "6" : selectedModule === "filter-groups" ? "7" : selectedModule === "er-model" ? "8" : "9"} de 9</b></div>
-          {modules.map((module) => (
+          {moduleGroups.map((group) => <div className="sql-module-group" key={group.title}><div className="sql-module-group-title">{group.title}</div>{group.modules.map((module) => (
             <button key={module.id} type="button" className={`sql-module ${module.id === selectedModule ? "current" : ""} ${module.active ? "" : "locked"}`} disabled={!module.active} onClick={() => { if (module.active) { setSelectedModule(module.id); setSelected(null); setChecked(false); } }}>
               <span className="sql-module-number">{module.number}</span>
               <span className="sql-module-copy"><b>{module.title}</b><small>{module.duration}</small></span>
               <span className="sql-module-mark">{module.active ? "→" : "·"}</span>
             </button>
-          ))}
+          ))}</div>)}
           <div className="sql-note"><strong>Tu objetivo</strong><p>Entender por qué las bases relacionales son la base de tantos sistemas reales.</p></div>
         </aside>
 
