@@ -6,6 +6,7 @@ import { SqlPlayground } from "./sql-playground";
 import { SqlOrderGame } from "./sql-order-game";
 import { SqlVisualLab } from "./sql-visual-lab";
 import { defaultSqlProgress, readSqlProgress, writeSqlProgress, type SqlProgress } from "./sql-progress";
+import { SqlAdvancedLesson } from "./sql-advanced-lessons";
 
 const modules = [
   { id: "rdbms", number: "01", title: "¿Qué es un RDBMS?", duration: "12 min", active: true },
@@ -17,6 +18,12 @@ const modules = [
   { id: "filter-groups", number: "07", title: "Filtrar grupos de datos", duration: "15 min", active: true },
   { id: "er-model", number: "08", title: "Modelo Entidad–Relación", duration: "20 min", active: true },
   { id: "relationships", number: "09", title: "Unir datos con JOIN", duration: "20 min", active: true },
+  { id: "subqueries", number: "10", title: "Subconsultas y EXISTS", duration: "25 min", active: true },
+  { id: "set-ops", number: "11", title: "UNION y conjuntos", duration: "20 min", active: true },
+  { id: "expressions", number: "12", title: "CASE, NULL y conversiones", duration: "25 min", active: true },
+  { id: "constraints", number: "13", title: "Tablas y restricciones", duration: "25 min", active: true },
+  { id: "views-indexes", number: "14", title: "Vistas, índices y seguridad", duration: "25 min", active: true },
+  { id: "capstone", number: "15", title: "Proyecto final: informe de ventas", duration: "30 min", active: true },
 ];
 
 const quizOptions = ["Un sistema que administra datos en una o varias tablas relacionadas", "Un lenguaje exclusivo para crear páginas web", "Un archivo de texto sin estructura", "Un programa que solo sirve para hacer reportes"];
@@ -28,7 +35,7 @@ export function SqlCourse({ progress: externalProgress, onProgress: externalOnPr
   const updateProgress = (changes: Partial<SqlProgress>) => setSqlProgress((current) => { const next = { ...current, ...changes }; if (externalOnProgress) externalOnProgress(changes); else writeSqlProgress(next); return next; });
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
-  const moduleGroups = [{ title: "01 · Fundamentos", modules: modules.slice(0, 2) }, { title: "02 · Consultas y T-SQL", modules: modules.slice(2, 7) }, { title: "03 · Diseño y relaciones", modules: modules.slice(7) }];
+  const moduleGroups = [{ title: "01 · Fundamentos", modules: modules.slice(0, 2) }, { title: "02 · Consultas y T-SQL", modules: modules.slice(2, 7) }, { title: "03 · Diseño y relaciones", modules: modules.slice(7, 9) }, { title: "04 · SQL aplicado", modules: modules.slice(9) }];
 
   return (
     <section className="sql-course">
@@ -56,7 +63,7 @@ export function SqlCourse({ progress: externalProgress, onProgress: externalOnPr
 
       <div className="sql-layout">
         <aside className="sql-modules" aria-label="Módulos del curso SQL">
-          <div className="sql-modules-heading"><span>CURSO · FUNDAMENTOS</span><b>{selectedModule === "rdbms" ? "1" : selectedModule === "sql-server" ? "2" : selectedModule === "tsql-dml" ? "3" : selectedModule === "schemas-ddl" ? "4" : selectedModule === "sql-terminology" ? "5" : selectedModule === "aggregates" ? "6" : selectedModule === "filter-groups" ? "7" : selectedModule === "er-model" ? "8" : "9"} de 9</b></div>
+          <div className="sql-modules-heading"><span>CURSO · SQL COMPLETO</span><b>{(modules.findIndex((module) => module.id === selectedModule) + 1)} de {modules.length}</b></div>
           {moduleGroups.map((group) => <div className="sql-module-group" key={group.title}><div className="sql-module-group-title">{group.title}</div>{group.modules.map((module) => (
             <button key={module.id} type="button" className={`sql-module ${module.id === selectedModule ? "current" : ""} ${module.active ? "" : "locked"}`} disabled={!module.active} onClick={() => { if (module.active) { setSelectedModule(module.id); setSelected(null); setChecked(false); } }}>
               <span className="sql-module-number">{module.number}</span>
@@ -92,7 +99,7 @@ export function SqlCourse({ progress: externalProgress, onProgress: externalOnPr
           <div className="sql-use-cards"><div><span>OLTP</span><strong>Transaccional</strong><p>Operaciones del día a día: ventas, pedidos, nómina o inventario.</p></div><div><span>OLAP</span><strong>Analítico</strong><p>Reportes, inteligencia de negocio y análisis de grandes volúmenes.</p></div></div>
 
           <div className="sql-quiz"><p className="eyebrow">COMPRUEBA LO QUE ENTENDISTE</p><h4>¿Qué define mejor a un RDBMS?</h4><div className="sql-quiz-options">{quizOptions.map((option, index) => <button type="button" key={option} className={`${selected === index ? "selected" : ""} ${checked && index === 0 ? "correct" : ""} ${checked && selected === index && index !== 0 ? "wrong" : ""}`} onClick={() => !checked && setSelected(index)}><span>{String.fromCharCode(65 + index)}</span>{option}</button>)}</div>{checked && <p className={`sql-quiz-feedback ${selected === 0 ? "ok" : "retry"}`}>{selected === 0 ? "¡Correcto! Las relaciones y la estructura son la esencia de un RDBMS." : "Casi. Recuerda: administra datos estructurados en tablas conectadas por relaciones."}</p>}<button type="button" className="primary-cta" disabled={selected === null} onClick={() => setChecked(true)}>{checked ? "Respuesta revisada" : "Comprobar respuesta"}<span>→</span></button></div>
-        </article> : selectedModule === "sql-server" ? <SqlToolsLesson /> : selectedModule === "tsql-dml" ? <TsqlDmlLesson /> : selectedModule === "schemas-ddl" ? <SchemasDdlLesson /> : selectedModule === "sql-terminology" ? <SqlTerminologyLesson /> : selectedModule === "aggregates" ? <AggregateLesson /> : selectedModule === "filter-groups" ? <FilterGroupsLesson /> : selectedModule === "er-model" ? <ErModelLesson /> : <JoiningLesson />}
+        </article> : selectedModule === "sql-server" ? <SqlToolsLesson /> : selectedModule === "tsql-dml" ? <TsqlDmlLesson /> : selectedModule === "schemas-ddl" ? <SchemasDdlLesson /> : selectedModule === "sql-terminology" ? <SqlTerminologyLesson /> : selectedModule === "aggregates" ? <AggregateLesson /> : selectedModule === "filter-groups" ? <FilterGroupsLesson /> : selectedModule === "er-model" ? <ErModelLesson /> : selectedModule === "relationships" ? <JoiningLesson /> : <SqlAdvancedLesson id={selectedModule} />}
       </div>
     </section>
   );
